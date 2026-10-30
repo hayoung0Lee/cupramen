@@ -72,6 +72,23 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
         """Execute the action logic."""
         pass
 
+    def reset(self) -> None:
+        """Set up per-run state. Called each time the node starts (again).
+
+        An action that spans several ticks keeps its progress (current phase, start
+        time, targets) here rather than in __init__; otherwise a repeated or retried
+        run resumes from where the previous run ended and finishes without working.
+        """
+
+    def initialise(self) -> None:
+        """py_trees hook: runs when the node is ticked while not already RUNNING."""
+        try:
+            self.reset()
+        except Exception as e:
+            # Same policy as update(): an action error must not crash the tree. The node
+            # then fails on its first execute(), which sees the incomplete state.
+            print(f"Action {self.name} reset failed: {e}")
+
     def update(self) -> py_trees.common.Status:
         """Called by py_trees during tick."""
         try:
