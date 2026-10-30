@@ -2,6 +2,9 @@
 guide/
 cupramen_sim_assets/
 
+# Personal working notes (contain dimensions taken from the provided assets)
+/docs/
+
 # Python
 __pycache__/
 *.py[cod]

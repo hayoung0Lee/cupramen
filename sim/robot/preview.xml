@@ -1,0 +1,21 @@
+<!-- Robot-only preview for the MuJoCo desktop viewer:
+       python -m mujoco.viewer --mjcf=sim/robot/preview.xml
+     Use the Control panel sliders (right side) to drive actuators. -->
+<mujoco model="youbot_lift_preview">
+  <include file="youbot_lift.xml"/>
+  <visual>
+    <headlight ambient="0.4 0.4 0.4" diffuse="0.5 0.5 0.5"/>
+  </visual>
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.92 0.92 0.92" rgb2="0.84 0.84 0.86" width="512" height="512"/>
+    <material name="grid" texture="grid" texrepeat="4 4" texuniform="true"/>
+  </asset>
+  <worldbody>
+    <light pos="0 0 4" dir="0 0 -1"/>
+    <geom name="floor" type="plane" size="3 3 0.05" material="grid"/>
+    <!-- Reference heights: 0.6 / 1.0 m shelf tiers, 0.708 m box floor -->
+    <geom type="box" size="0.3 0.005 0.001" pos="0.6 0 0.600" rgba="0 0.7 0 0.5" contype="0" conaffinity="0"/>
+    <geom type="box" size="0.3 0.005 0.001" pos="0.6 0 1.000" rgba="0 0.7 0 0.5" contype="0" conaffinity="0"/>
+    <geom type="box" size="0.3 0.005 0.001" pos="0.6 0 0.708" rgba="0.8 0.5 0.1 0.5" contype="0" conaffinity="0"/>
+  </worldbody>
+</mujoco>

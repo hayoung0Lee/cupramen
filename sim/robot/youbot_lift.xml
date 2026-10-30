@@ -1,0 +1,140 @@
+<!-- youBot-lift: youBot base + vertical lift column + lengthened youBot 5-DOF arm + suction tool.
+
+     Frames: base_link origin is on the floor under the base centre, +x = robot forward, +z up.
+     Base is driven by three planar joints (base_x, base_y slide in world axes, then base_yaw)
+     instead of simulated mecanum rollers; wheels are visual only.
+
+     Arm joint offsets and limits follow the youBot arm (ROS youbot_description URDF, in its
+     upright "candle" pose); link lengths L1/L2 are stretched from 0.155/0.135 to 0.23/0.20 m.
+     Zero arm pose points straight up; positive arm2..arm4 tilt toward +x (forward).
+
+     Looks: youBot meshes from ROS youbot_description (GPLv3, see meshes/youbot/README.md),
+     converted by tools/convert_youbot_meshes.py. They are visual only (group 2); physics uses
+     the primitive collision geoms (group 3, hidden in the viewer by default). Column,
+     carriage and suction tool are not youBot parts and stay primitives (visible and colliding).
+
+     Collision filtering (bit 1 = scene, bit 2 = robot body, bit 4 = moving arm):
+       body group (chassis, column, carriage, arm0, link1): contype=2 conaffinity=1
+       arm group  (link2 .. suction pad):                   contype=4 conaffinity=3
+     Both groups collide with the scene; the arm collides with the body; parts inside the
+     same group never collide (they touch at rest and would jitter). -->
+<mujoco model="youbot_lift">
+  <compiler angle="radian" meshdir="meshes/youbot"/>
+
+  <asset>
+    <mesh name="base_0" file="base_0.obj"/> <mesh name="base_1" file="base_1.obj"/> <mesh name="base_2" file="base_2.obj"/>
+    <mesh name="arm0_0" file="arm0_0.obj"/>
+    <mesh name="arm1_0" file="arm1_0.obj"/> <mesh name="arm1_1" file="arm1_1.obj"/>
+    <mesh name="arm2_0" file="arm2_0.obj"/> <mesh name="arm2_1" file="arm2_1.obj"/>
+    <mesh name="arm3_0" file="arm3_0.obj"/> <mesh name="arm3_1" file="arm3_1.obj"/>
+    <mesh name="arm4_0" file="arm4_0.obj"/> <mesh name="arm4_1" file="arm4_1.obj"/>
+    <mesh name="arm5_0" file="arm5_0.obj"/>
+  </asset>
+
+  <default>
+    <default class="robot">
+      <geom contype="2" conaffinity="1" group="3" friction="0.8 0.005 0.0001" rgba="0.15 0.15 0.15 1"/>
+      <joint damping="1" armature="0.01"/>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2" mass="0"/>
+        <default class="orange"><geom rgba="1.0 0.41 0.14 1"/></default>
+        <default class="black"><geom rgba="0.05 0.05 0.05 1"/></default>
+        <default class="dark"><geom rgba="0.29 0.29 0.29 1"/></default>
+        <default class="grey"><geom rgba="0.44 0.44 0.44 1"/></default>
+        <default class="light"><geom rgba="0.91 0.91 0.91 1"/></default>
+      </default>
+      <default class="arm">
+        <geom rgba="0.95 0.45 0.05 1"/>
+        <joint damping="5" armature="0.05"/>
+        <default class="arm_moving">
+          <geom contype="4" conaffinity="3"/>
+        </default>
+      </default>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="base_link" childclass="robot">
+      <joint name="base_x" type="slide" axis="1 0 0" damping="0"/>
+      <joint name="base_y" type="slide" axis="0 1 0" damping="0"/>
+      <joint name="base_yaw" type="hinge" axis="0 0 1" damping="0"/>
+      <!-- Chassis 580 x 380 mm, floats 30 mm above the floor so it never rubs the ground -->
+      <geom name="chassis" type="box" size="0.29 0.19 0.06" pos="0 0 0.09" mass="20"/>
+      <geom class="dark" mesh="base_0" pos="0 0 0.084"/>
+      <geom class="light" mesh="base_1" pos="0 0 0.084"/>
+      <geom class="orange" mesh="base_2" pos="0 0 0.084"/>
+      <geom name="wheel_fl" class="black" type="cylinder" size="0.05 0.03" pos=" 0.228  0.158 0.05" euler="1.5708 0 0"/>
+      <geom name="wheel_fr" class="black" type="cylinder" size="0.05 0.03" pos=" 0.228 -0.158 0.05" euler="1.5708 0 0"/>
+      <geom name="wheel_rl" class="black" type="cylinder" size="0.05 0.03" pos="-0.228  0.158 0.05" euler="1.5708 0 0"/>
+      <geom name="wheel_rr" class="black" type="cylinder" size="0.05 0.03" pos="-0.228 -0.158 0.05" euler="1.5708 0 0"/>
+      <site name="base_center" pos="0 0 0.15" size="0.01" group="4"/>
+
+      <!-- Lift column (fixed). Carriage slides along its front face. -->
+      <geom name="column" type="box" size="0.05 0.06 0.66" pos="0.10 0 0.81" mass="3" group="2" rgba="0.6 0.6 0.62 1"/>
+
+      <!-- Shoulder (arm2) height = 0.75 m + lift_z, lift_z in [0, 0.6] -->
+      <body name="lift_carriage" pos="0.185 0 0.635" gravcomp="1">
+        <joint name="lift_z" type="slide" axis="0 0 1" range="0 0.6" damping="50"/>
+        <geom name="carriage" type="box" size="0.035 0.07 0.06" mass="2" group="2" rgba="0.3 0.3 0.32 1"/>
+
+        <body name="arm_base" pos="0.041 0 0" gravcomp="1">
+          <geom name="arm0" class="arm" type="cylinder" size="0.055 0.02" pos="0 0 0.02" mass="0.8"/>
+          <geom class="grey" mesh="arm0_0"/>
+
+          <body name="arm_link1" pos="0.024 0 0.096" gravcomp="1">
+            <joint name="arm1" class="arm" type="hinge" axis="0 0 1" range="-2.9496 2.9496"/>
+            <geom name="link1" class="arm" type="capsule" fromto="0 0 -0.04 0.033 0 0.019" size="0.04" mass="1.2"/>
+            <geom class="orange" mesh="arm1_0"/> <geom class="black" mesh="arm1_1"/>
+
+            <body name="arm_link2" pos="0.033 0 0.019" gravcomp="1" childclass="arm_moving">
+              <joint name="arm2" type="hinge" axis="0 1 0" range="-1.13446 1.5708"/>
+              <geom name="link2" type="capsule" fromto="0 0 0 0 0 0.23" size="0.035" mass="1.2"/>
+              <geom class="orange" mesh="arm2_0"/> <geom class="black" mesh="arm2_1"/>
+
+              <body name="arm_link3" pos="0 0 0.23" gravcomp="1">
+                <joint name="arm3" type="hinge" axis="0 1 0" range="-2.63545 2.54818"/>
+                <geom name="link3" type="capsule" fromto="0 0 0 0 0 0.20" size="0.03" mass="0.8"/>
+                <geom class="orange" mesh="arm3_0"/> <geom class="black" mesh="arm3_1"/>
+
+                <body name="arm_link4" pos="0 0 0.20" gravcomp="1">
+                  <joint name="arm4" type="hinge" axis="0 1 0" range="-1.78024 1.78024"/>
+                  <geom name="link4" type="capsule" fromto="0 0 0 -0.002 0 0.130" size="0.028" mass="0.4"/>
+                  <geom class="orange" mesh="arm4_0"/> <geom class="black" mesh="arm4_1"/>
+
+                  <!-- arm4 axis to tool tip stays 0.153 m: 0.130 to arm5 + 0.023 suction tool -->
+                  <body name="arm_link5" pos="-0.002 0 0.130" gravcomp="1">
+                    <joint name="arm5" type="hinge" axis="0 0 1" range="-2.92343 2.92343"/>
+                    <geom name="tool_body" type="cylinder" size="0.022 0.008" pos="0 0 0.003" mass="0.2" group="2" rgba="0.2 0.2 0.2 1"/>
+                    <geom class="grey" mesh="arm5_0"/>
+
+                    <!-- Suction pad. The vacuum seal itself is modelled in sim/world.py (weld to the
+                         sealed cup); margin/gap report pad-lid contact just before touching. -->
+                    <body name="suction_pad" pos="0 0 0.011" gravcomp="1">
+                      <geom name="pad" type="cylinder" size="0.04 0.006" pos="0 0 0.006" mass="0.05" group="2"
+                            margin="0.003" gap="0.003" friction="1.2 0.01 0.0001" rgba="0.1 0.5 0.9 1"/>
+                      <site name="tool_tip" pos="0 0 0.012" size="0.006" rgba="1 0 0 1"/>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- Base: commanded world-frame velocities (m/s, rad/s) -->
+    <velocity name="base_vx"  joint="base_x"   kv="3000" ctrlrange="-0.6 0.6" forcerange="-600 600"/>
+    <velocity name="base_vy"  joint="base_y"   kv="3000" ctrlrange="-0.6 0.6" forcerange="-600 600"/>
+    <velocity name="base_wz"  joint="base_yaw" kv="800"  ctrlrange="-1.2 1.2" forcerange="-300 300"/>
+    <!-- Lift and arm: commanded joint positions -->
+    <position name="lift" joint="lift_z" kp="8000" ctrlrange="0 0.6" forcerange="-800 800"/>
+    <position name="arm1" joint="arm1" kp="300" ctrlrange="-2.9496 2.9496"   forcerange="-60 60"/>
+    <position name="arm2" joint="arm2" kp="400" ctrlrange="-1.13446 1.5708"  forcerange="-80 80"/>
+    <position name="arm3" joint="arm3" kp="300" ctrlrange="-2.63545 2.54818" forcerange="-60 60"/>
+    <position name="arm4" joint="arm4" kp="150" ctrlrange="-1.78024 1.78024" forcerange="-30 30"/>
+    <position name="arm5" joint="arm5" kp="50"  ctrlrange="-2.92343 2.92343" forcerange="-10 10"/>
+  </actuator>
+</mujoco>
