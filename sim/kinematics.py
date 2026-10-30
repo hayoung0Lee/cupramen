@@ -16,7 +16,7 @@ from sim.world import PREFIX, r
 
 IK_JOINTS = ["lift_z", "arm1", "arm2", "arm3", "arm4"]
 DOWN = np.array([0.0, 0.0, -1.0])
-SHOULDER_AT_ZERO_LIFT = 0.75  # arm2 height when lift_z = 0
+SHOULDER_AT_ZERO_LIFT = 0.70  # arm2 height when lift_z = 0
 TOOL_LENGTH = 0.153           # arm4 axis to tool tip
 
 
@@ -103,6 +103,18 @@ class ArmIK:
             axis_err=axis_err,
             ok=pos_err < 0.005 and axis_err < 0.05,
         )
+
+    def tool_tip_at(self, src: mujoco.MjData, q: dict[str, float],
+                    base: tuple[float, float, float]) -> np.ndarray:
+        """Where the tool tip would be with the base at `base` and the joints at q."""
+        m, d = self.m, self.d
+        self._load(src)
+        for j, v in zip(("base_x", "base_y", "base_yaw"), base):
+            d.qpos[m.joint(r(j)).qposadr[0]] = v
+        for j, v in q.items():
+            d.qpos[m.joint(r(j)).qposadr[0]] = v
+        mujoco.mj_kinematics(m, d)
+        return d.site_xpos[self.site].copy()
 
     def contacts_at(self, src: mujoco.MjData, q: dict[str, float],
                     base: tuple[float, float, float] | None = None) -> list[tuple[str, str]]:

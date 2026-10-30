@@ -11,7 +11,10 @@ from dataclasses import dataclass
 import numpy as np
 
 BASE_HALF_LENGTH = 0.29   # chassis half size along robot x (youbot_lift.xml)
-GAP = 0.03                # chassis front edge to furniture
+# Chassis front edge to the box stand / shelf front. The youBot arm base and first link
+# stick out ~5 cm past the chassis front; with 3 cm they sat 2 cm inside the box stand and
+# the shelf's upper board.
+GAP = 0.06
 BOX_STAND_HALF = (0.253, 0.198)   # box_stand half sizes (x, y), box.xml
 BOX_INTERIOR_HALF = (0.225, 0.17)
 SHELF_HALF_DEPTH = 0.20   # shelf 900 x 400 mm, front = -y

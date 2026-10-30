@@ -19,9 +19,10 @@ import py_trees
 
 from behavioros.core.actions import BaseAction, action
 from shelving.skills import (
-    HOVER, LIFT, PRESS, carry_pose, plan_box_approach, plan_shelf_approach, route, solve_down,
+    CARRY_TIP, HOVER, LIFT, PRESS, base_frame_point, carry_pose, plan_box_approach,
+    plan_shelf_approach, route, solve_down,
 )
-from sim.motion import BaseMove, JointMove, Wait
+from sim.motion import BaseMove, JointMove, ToolLine, Wait
 from sim.world import STOW
 
 RUNNING = py_trees.common.Status.RUNNING
@@ -228,9 +229,15 @@ class GoToShelf(SimAction):
                 return self.fail("no_shelf_spot", slot=slot)
             self.write_blackboard("shelf_plan", plan)
             park = (plan.park.x, plan.park.y, plan.park.yaw)
+            # Tool positions with the base at `out`: in front of the shelf at slot height,
+            # and the slot-entry pose. Near the shelf the tool moves only along straight
+            # lines (ToolLine): joint interpolation swings the tip on an arc into the boards.
+            ready_tip = self.ik.tool_tip_at(world.d, plan.q_ready.q, plan.out)
+            reach_in_tip = self.ik.tool_tip_at(world.d, plan.q_hover.q, plan.out)
             self.stages = [
                 Guarded(BaseMove(route(self.planner, start, plan.out)), holding(cup)),
-                Guarded(JointMove(plan.q_hover.q, 2.5), holding(cup)),
+                Guarded(ToolLine(self.ik, ready_tip, 2.0), holding(cup)),     # down, outside
+                Guarded(ToolLine(self.ik, reach_in_tip, 1.5), holding(cup)),  # reach in level
                 Guarded(BaseMove([park], vmax=0.12), holding(cup)),
             ]
             print(f"    [{self.name}] slot_{slot}: parking {plan.park.side}")
@@ -240,7 +247,7 @@ class GoToShelf(SimAction):
 @action(
     "place_cup",
     "Lower the held cup onto the slot (correcting for where it sits on the pad), release, "
-    "back away and stow the arm.",
+    "back away and fold the arm up outside the shelf.",
     reads=["world", "ik", "shelf_plan"],
 )
 class PlaceCup(SimAction):
@@ -256,19 +263,24 @@ class PlaceCup(SimAction):
             # The cup can sit off-centre on the pad: aim the cup bottom, not the tool.
             offset = world.tool_tip() - world.d.site(f"{cup}_bottom").xpos
             base = world.base_pose()
-            q_align = solve_down(world, self.ik, base, slot_xyz + offset + [0, 0, HOVER])
-            q_down = solve_down(world, self.ik, base, slot_xyz + offset + [0, 0, 0.003])
-            if q_align is None or q_down is None:
+            align_tip = slot_xyz + offset + [0, 0, HOVER]
+            down_tip = slot_xyz + offset + [0, 0, 0.003]
+            if solve_down(world, self.ik, base, align_tip) is None or \
+                    solve_down(world, self.ik, base, down_tip) is None:
                 return self.fail("ik_failed", slot=slot,
                                  offset_mm=round(1000 * float(np.linalg.norm(offset[:2]))))
+            # After backing out: pull the tool out level, then straight up to the travel pose.
+            ready_tip = self.ik.tool_tip_at(world.d, plan.q_ready.q, plan.out)
+            travel_tip = base_frame_point(plan.out, CARRY_TIP)
             self.stages = [
-                Guarded(JointMove(q_align.q, 1.5), holding(cup)),
-                Guarded(JointMove(q_down.q, 1.5), holding(cup)),
+                Guarded(ToolLine(self.ik, align_tip, 1.5), holding(cup)),
+                Guarded(ToolLine(self.ik, down_tip, 1.5), holding(cup)),
                 Do(lambda w: w.suction_off()),
                 Wait(0.8),
-                JointMove(plan.q_hover.q, 1.0),
+                ToolLine(self.ik, align_tip, 1.0),
                 BaseMove([plan.out], vmax=0.12),
-                JointMove(STOW, 2.5),
+                ToolLine(self.ik, ready_tip, 1.5),
+                ToolLine(self.ik, travel_tip, 1.5),
             ]
         return self.run_stages()
 

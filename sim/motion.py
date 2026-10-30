@@ -162,3 +162,32 @@ class Lazy:
         if self.inner is None:
             self.inner = self.factory(world)
         return self.inner.step(world)
+
+
+class ToolLine:
+    """Move the tool tip along a straight line to `target` (world), tool pointing down.
+
+    JointMove interpolates joint angles, so the tip travels on a curve between the two
+    poses; under a shelf board that curve can rise into the board. Here the tip target
+    moves along the line and IK is re-solved every step from the current joints.
+    """
+
+    def __init__(self, ik, target, duration: float = 1.5, tol: float = 0.005):
+        self.ik, self.target = ik, np.asarray(target, float)
+        self.duration, self.tol = duration, tol
+        self.t0 = None
+        self.p0 = None
+
+    def step(self, world: World) -> bool:
+        d = world.d
+        if self.t0 is None:
+            self.t0, self.p0 = d.time, world.tool_tip()
+        s = min(1.0, (d.time - self.t0) / self.duration)
+        s = s * s * (3 - 2 * s)
+        res = self.ik.solve(d, self.p0 + s * (self.target - self.p0), seed=world.joint_positions())
+        for j, q in res.q.items():
+            d.actuator(r(POSITION_ACTUATOR[j])).ctrl = q
+        if s < 1.0:
+            return False
+        err = float(np.linalg.norm(world.tool_tip() - self.target))
+        return err < self.tol or d.time - self.t0 > self.duration + 1.0

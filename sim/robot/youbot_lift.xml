@@ -72,18 +72,21 @@
       <!-- Lift column (fixed). Carriage slides along its front face. -->
       <geom name="column" type="box" size="0.05 0.06 0.66" pos="0.10 0 0.81" mass="3" group="2" rgba="0.6 0.6 0.62 1"/>
 
-      <!-- Shoulder (arm2) height = 0.75 m + lift_z, lift_z in [0, 0.6] -->
-      <body name="lift_carriage" pos="0.185 0 0.635" gravcomp="1">
+      <!-- Shoulder (arm2) height = 0.70 m + lift_z, lift_z in [0, 0.6]. Low enough that, placing
+           on the lower tier, the elbow stays clear of the upper board above it. -->
+      <body name="lift_carriage" pos="0.185 0 0.585" gravcomp="1">
         <joint name="lift_z" type="slide" axis="0 0 1" range="0 0.6" damping="50"/>
         <geom name="carriage" type="box" size="0.035 0.07 0.06" mass="2" group="2" rgba="0.3 0.3 0.32 1"/>
 
         <body name="arm_base" pos="0.041 0 0" gravcomp="1">
-          <geom name="arm0" class="arm" type="cylinder" size="0.055 0.02" pos="0 0 0.02" mass="0.8"/>
+          <!-- Collides with its own mesh (convex hull): the youBot arm base is ~0.2 m wide,
+               a primitive cylinder let it look sunk into the box stand. -->
+          <geom name="arm0" class="arm" type="mesh" mesh="arm0_0" mass="0.8"/>
           <geom class="grey" mesh="arm0_0"/>
 
           <body name="arm_link1" pos="0.024 0 0.096" gravcomp="1">
             <joint name="arm1" class="arm" type="hinge" axis="0 0 1" range="-2.9496 2.9496"/>
-            <geom name="link1" class="arm" type="capsule" fromto="0 0 -0.04 0.033 0 0.019" size="0.04" mass="1.2"/>
+            <geom name="link1" class="arm" type="mesh" mesh="arm1_0" mass="1.2"/>
             <geom class="orange" mesh="arm1_0"/> <geom class="black" mesh="arm1_1"/>
 
             <body name="arm_link2" pos="0.033 0 0.019" gravcomp="1" childclass="arm_moving">
@@ -98,7 +101,7 @@
 
                 <body name="arm_link4" pos="0 0 0.20" gravcomp="1">
                   <joint name="arm4" type="hinge" axis="0 1 0" range="-1.78024 1.78024"/>
-                  <geom name="link4" type="capsule" fromto="0 0 0 -0.002 0 0.130" size="0.028" mass="0.4"/>
+                  <geom name="link4" type="capsule" fromto="0 0 0 -0.002 0 0.095" size="0.028" mass="0.4"/>  <!-- ends above arm5 so its round end stays clear of a held lid -->
                   <geom class="orange" mesh="arm4_0"/> <geom class="black" mesh="arm4_1"/>
 
                   <!-- arm4 axis to tool tip stays 0.153 m: 0.130 to arm5 + 0.023 suction tool -->
