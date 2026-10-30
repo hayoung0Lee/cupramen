@@ -44,7 +44,7 @@ class TreeExecutor:
         blackboard: dict = None,
         tick_callback: Callable | None = None,  # Legacy support
     ):
-        self.blackboard = blackboard or {}
+        self.blackboard = {} if blackboard is None else blackboard
         self.tick_count = 0
         self.tick_callback = tick_callback
         self.start_time = None
@@ -184,7 +184,12 @@ class TreeExecutor:
                     f"Composites: sequence, selector/fallback, parallel. "
                     f"Registered actions: {', '.join(known) or '(none)'}"
                 )
-            for key, value in node_data.items():
-                if key not in ["type", "name", "children"]:
-                    self.blackboard[key] = value
-            return action_class(name=name, blackboard=self.blackboard)
+            params = {
+                k: v for k, v in node_data.items() if k not in ("type", "name", "children")
+            }
+            # v0.1 behaviour, kept for actions that read their params from the blackboard.
+            # Nodes sharing a key overwrite each other here; new actions use self.param().
+            self.blackboard.update(params)
+            node = action_class(name=name, blackboard=self.blackboard)
+            node.params = params
+            return node

@@ -2,10 +2,13 @@
 Simplified action system with useful metadata.
 """
 
+import re
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 import py_trees
+
+_REFERENCE = re.compile(r"\$\{([^}]+)\}")
 
 
 class ActionRegistry:
@@ -60,7 +63,9 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
             blackboard: Shared data storage
         """
         super().__init__(name=name, **kwargs)
-        self.blackboard = blackboard or {}
+        self.blackboard = {} if blackboard is None else blackboard
+        # This node's own parameters from its JSON node (set by TreeExecutor).
+        self.params: Dict[str, Any] = {}
 
     @abstractmethod
     def execute(self) -> py_trees.common.Status:
@@ -74,6 +79,22 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
         except Exception as e:
             print(f"Action {self.name} failed: {e}")
             return py_trees.common.Status.FAILURE
+
+    def param(self, key: str, default=None):
+        """Read this node's own parameter.
+
+        A parameter written as a single reference, e.g. "${current_cup}", is looked up in
+        the blackboard at the moment of reading, so values kept current by runtime
+        resolution are seen as they are now.
+        """
+        value = self.params.get(key, default)
+        if isinstance(value, str):
+            match = _REFERENCE.fullmatch(value)
+            if match:
+                # Same key the runtime processor writes: "name:default" / "name(args)" -> "name"
+                bb_key = match.group(1).split(":")[0].split("(")[0]
+                return self.blackboard.get(bb_key, default)
+        return value
 
     def read_blackboard(self, key: str, default=None):
         """Read value from blackboard."""

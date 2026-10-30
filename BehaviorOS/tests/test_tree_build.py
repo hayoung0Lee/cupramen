@@ -31,3 +31,13 @@ def test_unknown_action_type_is_an_error():
     }
     with pytest.raises(UnknownNodeTypeError, match="pick_cupp"):
         TreeExecutor(tree_json, {})
+
+
+def test_the_blackboard_passed_in_is_the_one_the_tree_uses():
+    # An empty dict is falsy, so `blackboard or {}` used to swap it for a new dict and the
+    # caller could not see what the tree wrote.
+    bb = {}
+    tree = TreeExecutor({"type": "test_build_ok"}, bb)
+    assert tree.blackboard is bb
+    node = AlwaysOk(name="n", blackboard=bb)
+    assert node.blackboard is bb
