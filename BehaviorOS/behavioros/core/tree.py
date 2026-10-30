@@ -12,6 +12,10 @@ from typing import Any, Callable
 import py_trees
 
 
+class UnknownNodeTypeError(ValueError):
+    """A JSON node's type is neither a composite nor a registered action."""
+
+
 @dataclass
 class TickResult:
     """Single tick result"""
@@ -171,11 +175,16 @@ class TreeExecutor:
             registry = get_registry()
             action_class = registry.get_class(node_type)
 
-            if action_class:
-                for key, value in node_data.items():
-                    if key not in ["type", "name", "children"]:
-                        self.blackboard[key] = value
-                return action_class(name=name, blackboard=self.blackboard)
-            else:
-                print(f"Action {node_type} not found! Using Success fallback")
-                return py_trees.behaviours.Success(name=f"Unknown: {node_type}")
+            if action_class is None:
+                # Fail at build time: silently substituting a Success node let a typo
+                # skip a step while the tree still reported SUCCESS.
+                known = sorted(a["id"] for a in registry.list_actions())
+                raise UnknownNodeTypeError(
+                    f"Node '{name}': unknown type '{node_type}'. "
+                    f"Composites: sequence, selector/fallback, parallel. "
+                    f"Registered actions: {', '.join(known) or '(none)'}"
+                )
+            for key, value in node_data.items():
+                if key not in ["type", "name", "children"]:
+                    self.blackboard[key] = value
+            return action_class(name=name, blackboard=self.blackboard)
