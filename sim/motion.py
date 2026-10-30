@@ -1,0 +1,164 @@
+"""Incremental motion primitives.
+
+Each primitive is advanced by calling step(world) once per control tick and returns True when
+finished. Nothing here loops over mj_step: the caller owns the simulation loop. This is the
+shape a Behavior Tree action needs (RUNNING until done), so these map 1:1 onto BT leaves later.
+"""
+
+from __future__ import annotations
+
+import math
+
+import numpy as np
+
+from sim.world import POSITION_ACTUATOR, World, r
+
+
+def _wrap(a: float) -> float:
+    return (a + math.pi) % (2 * math.pi) - math.pi
+
+
+class JointMove:
+    """Move lift/arm joints to targets along a smooth (smoothstep) joint-space path."""
+
+    def __init__(self, target: dict[str, float], duration: float = 2.0, tol: float = 0.01):
+        self.target, self.duration, self.tol = target, duration, tol
+        self.t0 = None
+        self.q0: dict[str, float] = {}
+
+    def step(self, world: World) -> bool:
+        d = world.d
+        if self.t0 is None:
+            self.t0 = d.time
+            self.q0 = {j: float(d.actuator(r(POSITION_ACTUATOR[j])).ctrl[0]) for j in self.target}
+        s = min(1.0, (d.time - self.t0) / self.duration)
+        s = s * s * (3 - 2 * s)
+        for j, q1 in self.target.items():
+            d.actuator(r(POSITION_ACTUATOR[j])).ctrl = self.q0[j] + s * (q1 - self.q0[j])
+        if s < 1.0:
+            return False
+        err = max(abs(float(d.joint(r(j)).qpos[0]) - q1) for j, q1 in self.target.items())
+        return err < self.tol or d.time - self.t0 > self.duration + 1.0
+
+
+class BaseMove:
+    """Drive the holonomic base through waypoints (x, y, yaw) with a capped P controller."""
+
+    def __init__(self, waypoints, vmax: float = 0.4, wmax: float = 0.8,
+                 amax: float = 0.4, alpha_max: float = 1.0,
+                 pos_tol: float = 0.01, yaw_tol: float = 0.01, pass_tol: float = 0.08):
+        self.waypoints = [tuple(w) for w in waypoints]
+        self.vmax, self.wmax = vmax, wmax
+        self.amax, self.alpha_max = amax, alpha_max  # m/s^2, rad/s^2: no jerky starts/stops
+        self.pos_tol, self.yaw_tol, self.pass_tol = pos_tol, yaw_tol, pass_tol
+        self.i = 0
+        self.t_last = None
+        self.cmd = np.zeros(3)
+
+    def step(self, world: World) -> bool:
+        d = world.d
+        x, y, yaw = world.base_pose()
+        gx, gy, gyaw = self.waypoints[self.i]
+        last = self.i == len(self.waypoints) - 1
+        e = np.array([gx - x, gy - y])
+        dist = float(np.linalg.norm(e))
+        eyaw = _wrap(gyaw - yaw)
+        if not last and dist < self.pass_tol:
+            self.i += 1
+            return False
+        if last and dist < self.pos_tol and abs(eyaw) < self.yaw_tol:
+            self.stop(world)
+            return True
+        # P control toward the waypoint; speed also capped so we can still brake within amax
+        vcap = min(self.vmax, math.sqrt(2 * self.amax * dist)) if last else self.vmax
+        v = e * min(1.5, vcap / max(dist, 1e-6))
+        w = float(np.clip(2.0 * eyaw, -self.wmax, self.wmax))
+        dt = 0.0 if self.t_last is None else d.time - self.t_last
+        self.t_last = d.time
+        dv = np.clip(np.array([v[0], v[1]]) - self.cmd[:2], -self.amax * dt, self.amax * dt)
+        dw = float(np.clip(w - self.cmd[2], -self.alpha_max * dt, self.alpha_max * dt))
+        self.cmd = self.cmd + np.array([dv[0], dv[1], dw])
+        d.actuator(r("base_vx")).ctrl = self.cmd[0]
+        d.actuator(r("base_vy")).ctrl = self.cmd[1]
+        d.actuator(r("base_wz")).ctrl = self.cmd[2]
+        return False
+
+    @staticmethod
+    def stop(world: World) -> None:
+        for a in ("base_vx", "base_vy", "base_wz"):
+            world.d.actuator(r(a)).ctrl = 0.0
+
+
+class Wait:
+    def __init__(self, seconds: float):
+        self.seconds, self.t0 = seconds, None
+
+    def step(self, world: World) -> bool:
+        if self.t0 is None:
+            self.t0 = world.d.time
+        return world.d.time - self.t0 >= self.seconds
+
+
+class Do:
+    """Run a function once (e.g. switch suction) and finish immediately."""
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def step(self, world: World) -> bool:
+        self.fn(world)
+        return True
+
+
+class Suction:
+    """Switch suction on (succeeds only if a seal forms) or off."""
+
+    def __init__(self, on: bool):
+        self.on = on
+        self.held: str | None = None
+
+    def step(self, world: World) -> bool:
+        if self.on:
+            self.held = world.suction_on()
+            print(f"    suction: {'sealed on ' + self.held if self.held else 'NO SEAL'}")
+        else:
+            world.suction_off()
+        return True
+
+
+def detour(start, goal, obstacles, margin: float = 0.15):
+    """Waypoints from start to goal (x, y) that skirt circular obstacles [(center, radius)].
+
+    Stand-in until a grid planner exists: one tangent-side waypoint per blocking obstacle.
+    """
+    start, goal = np.asarray(start, float), np.asarray(goal, float)
+    seg = goal - start
+    L2 = float(seg @ seg)
+    for i, (c, rad) in enumerate(obstacles):
+        c = np.asarray(c, float)
+        t = float(np.clip((c - start) @ seg / L2, 0.0, 1.0)) if L2 > 0 else 0.0
+        closest = start + t * seg
+        off = closest - c
+        if 0.0 < t < 1.0 and np.linalg.norm(off) < rad:
+            if np.linalg.norm(off) < 1e-6:
+                off = np.array([-seg[1], seg[0]])
+            via = c + (rad + margin) * off / np.linalg.norm(off)
+            rest = obstacles[:i] + obstacles[i + 1:]
+            return detour(start, via, rest, margin)[:-1] + detour(via, goal, rest, margin)
+    return [tuple(start), tuple(goal)]
+
+
+class Lazy:
+    """Build the real primitive on first step, from the state at that moment.
+
+    For motions whose target depends on what actually happened before (e.g. where the cup
+    ended up on the pad), as opposed to targets planned up front.
+    """
+
+    def __init__(self, factory):
+        self.factory, self.inner = factory, None
+
+    def step(self, world: World) -> bool:
+        if self.inner is None:
+            self.inner = self.factory(world)
+        return self.inner.step(world)
