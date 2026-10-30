@@ -2,7 +2,7 @@
 Helper functions for easy tree creation
 """
 
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 from behavioros.core import TreeExecutor
 from behavioros.hooks.default import create_logging_hook, create_runtime_hook
@@ -16,6 +16,7 @@ def create_tree(
     enable_logging: bool = True,
     enable_runtime: bool = True,
     log_dir: str = "logs",
+    clock: Callable[[], float] | None = None,
 ) -> TreeExecutor:
     """
     Create tree with essential features
@@ -27,6 +28,7 @@ def create_tree(
         enable_logging: Add logging
         enable_runtime: Add runtime resolution
         log_dir: Log directory
+        clock: Time source for durations and actions (default: wall clock)
 
     Returns:
         Configured TreeExecutor
@@ -39,7 +41,7 @@ def create_tree(
     resolved_tree = static.process(tree_json)
 
     # Create tree
-    tree = TreeExecutor(resolved_tree, blackboard)
+    tree = TreeExecutor(resolved_tree, blackboard, clock=clock)
 
     # Add runtime resolution
     if enable_runtime:

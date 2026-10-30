@@ -45,11 +45,16 @@ class TreeExecutor:
         json_data: dict,
         blackboard: dict = None,
         tick_callback: Callable | None = None,  # Legacy support
+        clock: Callable[[], float] | None = None,
     ):
         self.blackboard = {} if blackboard is None else blackboard
         self.tick_count = 0
         self.tick_callback = tick_callback
-        self.start_time = None
+        # Source of time for durations and for actions (self.now()). Pass the simulation
+        # time when running in a simulator; defaults to the wall clock.
+        self.clock = clock or time.time
+        self.start_time: float | None = None
+        self.end_time: float | None = None
 
         # Minimal hook system
         self.before_tick_hooks: list[Callable] = []
@@ -73,7 +78,7 @@ class TreeExecutor:
     def tick(self) -> TickResult:
         """Execute one tick with hooks"""
         if self.start_time is None:
-            self.start_time = time.time()
+            self.start_time = self.clock()
 
         # Before-tick hooks
         for hook in self.before_tick_hooks:
@@ -84,6 +89,8 @@ class TreeExecutor:
 
         self.tick_count += 1
         self.py_tree.tick()
+        if self.status in ("SUCCESS", "FAILURE"):
+            self.end_time = self.clock()
 
         result = TickResult(
             tick_count=self.tick_count,
@@ -111,7 +118,12 @@ class TreeExecutor:
 
     def get_execution_result(self) -> ExecutionResult:
         """Get current execution result"""
-        duration = time.time() - self.start_time if self.start_time else 0
+        # `is None`, not truthiness: a simulation clock starts at 0.0.
+        if self.start_time is None:
+            duration = 0.0
+        else:
+            end = self.end_time if self.end_time is not None else self.clock()
+            duration = end - self.start_time
         return ExecutionResult(
             status=self.status,
             total_ticks=self.tick_count,
@@ -216,6 +228,7 @@ class TreeExecutor:
             self.blackboard.update(params)
             node = action_class(name=name, blackboard=self.blackboard)
             node.params = params
+            node.clock = self.clock
             return node
 
     def _single_child(self, node_data: dict[str, Any]):

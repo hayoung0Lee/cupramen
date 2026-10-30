@@ -3,6 +3,7 @@ Simplified action system with useful metadata.
 """
 
 import re
+import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -66,6 +67,8 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
         self.blackboard = {} if blackboard is None else blackboard
         # This node's own parameters from its JSON node (set by TreeExecutor).
         self.params: Dict[str, Any] = {}
+        # The tree's clock (set by TreeExecutor); wall clock when used on its own.
+        self.clock = time.time
 
     @abstractmethod
     def execute(self) -> py_trees.common.Status:
@@ -97,6 +100,10 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
             print(f"Action {self.name} failed: {e}")
             return self.fail("exception", error=f"{type(e).__name__}: {e}")
 
+    def now(self) -> float:
+        """Current time on the tree's clock (simulation time when one was given)."""
+        return self.clock()
+
     def fail(self, reason: str, **detail) -> py_trees.common.Status:
         """Record why this action failed, then return FAILURE.
 
@@ -111,6 +118,7 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
             "action": getattr(self, "_action_id", type(self).__name__),
             "reason": reason,
             "detail": detail,
+            "time": self.now(),
         }
         self.blackboard["last_failure"] = record
         self.blackboard.setdefault("failure_log", []).append(record)

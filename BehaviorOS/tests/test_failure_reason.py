@@ -10,6 +10,7 @@
         "action": "pick_cup",          # Action 종류(JSON의 type)
         "reason": "seal_failed",       # 실패 이유(짧은 코드)
         "detail": {"cup": "cup_nugoori", "offset_mm": 31},
+        "time": 12.34,                 # 실패 시각(TreeExecutor의 clock 기준)
     }
     blackboard["failure_log"] = [ ...지금까지의 실패가 순서대로... ]
 
@@ -49,7 +50,9 @@ def test_fail_returns_failure_and_records_why():
     tree = TreeExecutor({"type": "test_seal_fails", "name": "Pick cup", "cup": "cup_nugoori"}, {})
 
     assert tree.tick().status == "FAILURE"
-    assert tree.blackboard["last_failure"] == {
+    failure = dict(tree.blackboard["last_failure"])
+    assert isinstance(failure.pop("time"), float)   # 실패 시각(tests/test_clock.py 참고)
+    assert failure == {
         "node": "Pick cup",
         "action": "test_seal_fails",
         "reason": "seal_failed",

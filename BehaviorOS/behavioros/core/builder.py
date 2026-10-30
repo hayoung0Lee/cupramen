@@ -4,7 +4,7 @@ Builder pattern for clean tree configuration
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from behavioros.core import TreeExecutor
 from behavioros.hooks.default import create_logging_hook, create_runtime_hook
@@ -20,13 +20,14 @@ class TreeBuilder:
         tree_json: dict[str, Any],
         blackboard: dict[str, Any],
         devices: dict[str, Any],
+        clock: Callable[[], float] | None = None,
     ):
         # Static resolution first
         static = StaticProcessor(devices, blackboard)
         resolved_tree = static.process(tree_json)
 
         # Create tree
-        self.tree = TreeExecutor(resolved_tree, blackboard)
+        self.tree = TreeExecutor(resolved_tree, blackboard, clock=clock)
         self.resolved_tree = resolved_tree
         self.devices = devices
 
