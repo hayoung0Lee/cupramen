@@ -104,7 +104,8 @@ class StaticProcessor:
                 except ValueError:
                     return default_value
 
-            return str(result) if result is not None else ""
+            # Not known yet: keep the reference for read-time lookup (BaseAction.param)
+            return str(result) if result is not None else match.group(0)
 
         # Special case: single template preserves type
         if (
@@ -136,7 +137,10 @@ class StaticProcessor:
                 except ValueError:
                     return default_value
 
-            return result
+            # A value that is not known yet (e.g. chosen by a node while the tree runs)
+            # used to become None here for good. Keep the reference; BaseAction.param()
+            # looks it up in the blackboard when the node reads it.
+            return template if result is None else result
 
         # Multiple templates or mixed content
         return self.TEMPLATE_PATTERN.sub(replacer, template)
