@@ -296,3 +296,73 @@ class VerifyPlaced(SimAction):
                              err_mm=round(1000 * err, 1), tilt_deg=round(tilt, 1))
         print(f"    [{self.name}] {cup} on slot_{slot}: {1000 * err:.1f} mm, {tilt:.1f} deg")
         return SUCCESS
+
+
+# ---------------------------------------------------------------------------
+# Task bookkeeping: the world-state ledger on the blackboard
+#   cups           {cup name: "in_box" | "placed" | "dropped" | "skipped"}
+#   slots          {slot number: cup name or None}
+#   current_cup    cup being handled now      (nodes read it as "${current_cup}")
+#   current_slot   slot it is going to        (nodes read it as "${current_slot}")
+#   all_cups_done  True when nothing is left to do (repeat_until stops on it)
+# ---------------------------------------------------------------------------
+def _print_ledger(bb):
+    cups = ", ".join(f"{c.removeprefix('cup_')}={s}" for c, s in bb["cups"].items())
+    slots = " ".join(f"{k}:{(v or '-').removeprefix('cup_')}" for k, v in bb["slots"].items())
+    print(f"    ledger | cups: {cups}\n           | slots: {slots}")
+
+
+@action(
+    "init_episode",
+    "Start the ledger: every cup in the box, every slot empty.",
+    reads=["world"],
+    writes=["cups", "slots", "all_cups_done"],
+)
+class InitEpisode(SimAction):
+    def execute(self):
+        self.write_blackboard("cups", {c: "in_box" for c in self.world.cup_names()})
+        self.write_blackboard("slots", {k: None for k in range(1, 7)})
+        self.write_blackboard("all_cups_done", False)
+        _print_ledger(self.blackboard)
+        return SUCCESS
+
+
+@action(
+    "select_next_task",
+    "Choose the next cup (still in the box, nearest to the robot) and slot (lowest empty).",
+    reads=["world", "cups", "slots"],
+    writes=["current_cup", "current_slot", "all_cups_done"],
+)
+class SelectNextTask(SimAction):
+    def execute(self):
+        world = self.world
+        in_box = [c for c, s in self.read_blackboard("cups").items() if s == "in_box"]
+        empty = [k for k, v in self.read_blackboard("slots").items() if v is None]
+        if not in_box or not empty:
+            self.write_blackboard("all_cups_done", True)
+            return self.fail("nothing_left", cups_in_box=len(in_box), empty_slots=len(empty))
+        base = np.array(world.base_pose()[:2])
+        cup = min(in_box, key=lambda c: float(np.linalg.norm(world.cup_top(c)[:2] - base)))
+        slot = min(empty)
+        self.write_blackboard("current_cup", cup)
+        self.write_blackboard("current_slot", slot)
+        print(f"    [{self.name}] next: {cup} -> slot_{slot}")
+        return SUCCESS
+
+
+@action(
+    "mark_placed",
+    "Record the current cup as placed on the current slot; set all_cups_done when finished.",
+    reads=["current_cup", "current_slot", "cups", "slots"],
+    writes=["cups", "slots", "all_cups_done"],
+)
+class MarkPlaced(SimAction):
+    def execute(self):
+        cup, slot = self.param("cup"), int(self.param("slot"))
+        cups, slots = self.read_blackboard("cups"), self.read_blackboard("slots")
+        cups[cup] = "placed"
+        slots[slot] = cup
+        done = "in_box" not in cups.values() or None not in slots.values()
+        self.write_blackboard("all_cups_done", done)
+        _print_ledger(self.blackboard)
+        return SUCCESS

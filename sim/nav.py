@@ -17,6 +17,7 @@ from sim.placement import BOX_STAND_HALF, SHELF_HALF_DEPTH, SHELF_HALF_WIDTH
 RES = 0.05            # m per cell
 ARENA = (-3.3, 3.3)   # m, square; layouts are sampled in (-3, 3)
 ROBOT_RADIUS = 0.45   # chassis half-diagonal 0.35 + tucked cup + margin
+ESCAPE_MAX = 0.5      # m: how far a start inside the margin may be led out to free space
 
 
 class GridPlanner:
@@ -47,10 +48,21 @@ class GridPlanner:
         return not self.occ[self._cell(p)]
 
     def plan(self, start, goal) -> list[np.ndarray] | None:
-        """Shortest collision-free (x, y) path, shortcut to few waypoints. None if blocked."""
+        """Shortest collision-free (x, y) path, shortcut to few waypoints. None if blocked.
+
+        The start may lie inside the inflated margin: the robot ends up there legitimately
+        after working close to the box or shelf. Then the path first leads straight out to
+        the nearest free cell.
+        """
         s, g = self._cell(start), self._cell(goal)
-        if self.occ[s] or self.occ[g]:
+        if self.occ[g]:
             return None
+        escape = None
+        if self.occ[s]:
+            s = self._nearest_free(s, max_dist=ESCAPE_MAX)
+            if s is None:
+                return None
+            escape = self._pt(s)
         steps = [(dx, dy, math.hypot(dx, dy)) for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy]
         h = lambda a: math.hypot(a[0] - g[0], a[1] - g[1])  # noqa: E731
         openq, came, cost = [(h(s), s)], {s: None}, {s: 0.0}
@@ -72,8 +84,23 @@ class GridPlanner:
         while came[cells[-1]] is not None:
             cells.append(came[cells[-1]])
         pts = [self._pt(c) for c in reversed(cells)]
-        pts[0], pts[-1] = np.asarray(start[:2], float), np.asarray(goal[:2], float)
+        pts[-1] = np.asarray(goal[:2], float)
+        if escape is None:
+            pts[0] = np.asarray(start[:2], float)
+        else:
+            pts.insert(0, np.asarray(start[:2], float))   # start -> escape cell -> ...
         return self._shortcut(pts)
+
+    def _nearest_free(self, cell, max_dist: float):
+        """Closest unoccupied cell within max_dist (m), or None."""
+        r = int(math.ceil(max_dist / RES))
+        best, best_d = None, math.inf
+        for i in range(max(0, cell[0] - r), min(self.n, cell[0] + r + 1)):
+            for j in range(max(0, cell[1] - r), min(self.n, cell[1] + r + 1)):
+                dist = math.hypot(i - cell[0], j - cell[1])
+                if not self.occ[i, j] and dist < best_d and dist * RES <= max_dist:
+                    best, best_d = (i, j), dist
+        return best
 
     def _line_free(self, a, b) -> bool:
         n = max(2, int(np.linalg.norm(b - a) / (RES / 2)))

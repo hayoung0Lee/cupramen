@@ -1,0 +1,21 @@
+{
+  "tree": {
+    "type": "sequence",
+    "name": "B4: shelve all cups",
+    "children": [
+      {"type": "init_episode", "name": "Init ledger"},
+      {"type": "repeat_until", "name": "Until all cups done", "until": "all_cups_done", "max_iterations": 12,
+       "children": [
+        {"type": "sequence", "name": "One cup", "children": [
+          {"type": "select_next_task", "name": "Select cup and slot"},
+          {"type": "go_to_box",     "name": "Go to box",        "cup": "${current_cup}"},
+          {"type": "pick_cup",      "name": "Pick cup",         "cup": "${current_cup}"},
+          {"type": "go_to_shelf",   "name": "Carry to shelf",   "cup": "${current_cup}", "slot": "${current_slot}"},
+          {"type": "place_cup",     "name": "Place cup",        "cup": "${current_cup}", "slot": "${current_slot}"},
+          {"type": "verify_placed", "name": "Verify placement", "cup": "${current_cup}", "slot": "${current_slot}"},
+          {"type": "mark_placed",   "name": "Mark placed",      "cup": "${current_cup}", "slot": "${current_slot}"}
+        ]}
+      ]}
+    ]
+  }
+}

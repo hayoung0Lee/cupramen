@@ -75,8 +75,11 @@ def main():
     def report():
         result = tree.get_execution_result()
         s = log.summary()
+        placed = randomize.count_placed(m, d)["success_count"]   # the provided judge
         print(f"\nresult {result.status}: {result.total_ticks} ticks, "
-              f"{result.duration:.1f} s sim time, base path {s['path_length_m']:.2f} m")
+              f"{result.duration:.1f} s sim time, base path {s['path_length_m']:.2f} m "
+              f"(x{s['path_vs_reference']:.2f} of straight-line reference), "
+              f"count_placed {placed}/6")
         for f in blackboard.get("failure_log", []):
             print(f"  failure at t={f['time']:.1f}s in '{f['node']}': {f['reason']} {f['detail']}")
 
