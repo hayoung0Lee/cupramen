@@ -1,0 +1,23 @@
+# Company-provided simulation assets and assignment brief (must not be published)
+guide/
+cupramen_sim_assets/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Local env / secrets
+.env
+
+# Run outputs (results CSV is committed explicitly under results/)
+outputs/
+*.mp4
+!BehaviorOS/docs/assets/demo.mp4
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
