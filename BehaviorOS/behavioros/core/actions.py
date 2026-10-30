@@ -95,7 +95,26 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
             return self.execute()
         except Exception as e:
             print(f"Action {self.name} failed: {e}")
-            return py_trees.common.Status.FAILURE
+            return self.fail("exception", error=f"{type(e).__name__}: {e}")
+
+    def fail(self, reason: str, **detail) -> py_trees.common.Status:
+        """Record why this action failed, then return FAILURE.
+
+        A FAILURE status only says *that* a node failed. Recovery nodes and run reports
+        need *why*, so it goes to the blackboard in one shape:
+          blackboard["last_failure"]  the most recent failure
+          blackboard["failure_log"]   every failure so far, in order
+        Usage in execute(): return self.fail("seal_failed", cup=cup)
+        """
+        record = {
+            "node": self.name,
+            "action": getattr(self, "_action_id", type(self).__name__),
+            "reason": reason,
+            "detail": detail,
+        }
+        self.blackboard["last_failure"] = record
+        self.blackboard.setdefault("failure_log", []).append(record)
+        return py_trees.common.Status.FAILURE
 
     def param(self, key: str, default=None):
         """Read this node's own parameter.
