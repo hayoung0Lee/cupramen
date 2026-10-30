@@ -94,10 +94,6 @@ flowchart LR
 
 BehaviorOS v0.1은 아이디어를 Webots에서 검증한 Python 프로토타입입니다.
 
-다음 버전은 이 프로토타입을 단순히 확장하지 않고, 계획 생성과 실행 사이의 계약을
-더 명확하게 만드는 방향으로 다시 설계할 예정입니다. 구체적인 구조와 기술 선택은
-[다음 버전](next-version.md)에서 설명합니다.
-
 !!! warning "현재 버전의 한계"
     v0.1은 연구·설계 검증용입니다. 생성된 계획을 실제 로봇에서 안전하게 실행하기
     위한 schema validation, parameter constraints, cancellation과 safety policy는 아직
@@ -113,4 +109,3 @@ BehaviorOS v0.1은 아이디어를 Webots에서 검증한 Python 프로토타입
 | [아키텍처](architecture.md) | 자연어 입력부터 실행까지의 데이터 흐름 |
 | [Value Resolution](resolution.md) | 값을 한 번 계산할지 반복해서 계산할지 구분하는 방식 |
 | [시작하기](getting-started.md) | Webots 기반 v0.1 실행 방법 |
-| [다음 버전](next-version.md) | Plan IR, BehaviorTree.CPP, ROS 2 재설계 계획 |

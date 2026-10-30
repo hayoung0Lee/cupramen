@@ -67,8 +67,7 @@ behavioros/
 ## 현재 실행 경계
 
 현재 executor는 Python `py_trees`입니다. BehaviorTree.CPP와 ROS 2는 v0.1의 일부가
-아닙니다. 다음 버전은 typed Plan IR, 명시적 validation, C++ BehaviorTree.CPP
-executor, ROS 2 Action/Service 경계를 사용해 별도로 재설계합니다.
+아닙니다.
 
 ## 알려진 한계
 

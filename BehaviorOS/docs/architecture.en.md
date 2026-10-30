@@ -67,8 +67,7 @@ behavioros/
 ## Current execution boundary
 
 The current executor is Python `py_trees`; BehaviorTree.CPP and ROS 2 are not part of
-v0.1. The next version is a separate redesign with a typed Plan IR, explicit
-validation, a C++ BehaviorTree.CPP executor, and ROS 2 Action/Service boundaries.
+v0.1.
 
 ## Known limitations
 

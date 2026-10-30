@@ -99,17 +99,3 @@ pick up the red can
 
 See [Getting Started](docs/getting-started.en.md) for the complete flow and prototype
 limitations.
-
-## Next version
-
-The next version will be a redesign rather than an in-place extension of v0.1. The
-planned architecture introduces:
-
-- a constrained, typed Plan IR;
-- explicit schema and semantic validation;
-- deterministic Plan IR-to-BehaviorTree.CPP XML compilation;
-- a C++ BehaviorTree.CPP executor;
-- ROS 2 Action/Service capability boundaries;
-- connected execution traces from planning to Action results.
-
-See [Next Version](docs/next-version.en.md) for the planned architecture and scope.

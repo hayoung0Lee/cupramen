@@ -66,5 +66,4 @@ resolver가 그 이름에 최신 값을 연결할 수 있습니다.
 - BehaviorTree.CPP 또는 ROS 2 실행기
 - 실제 로봇 배포 수준의 timeout, cancellation, approval policy
 
-이 항목들은 v0.1의 기능으로 표현하지 않습니다. 다음 버전은 typed Plan IR,
-validation, BehaviorTree.CPP, ROS 2 구조를 기준으로 별도 재설계할 예정입니다.
+이 항목들은 v0.1의 기능으로 표현하지 않습니다.

@@ -34,7 +34,6 @@ plugins:
           nav_translations:
             Home: 홈
             What This Library Solves: 해결하려는 문제
-            Next Version: 다음 버전
             Getting Started: 시작하기
             Core Concepts: 핵심 개념
             Architecture: 아키텍처
@@ -70,7 +69,6 @@ markdown_extensions:
 nav:
   - Home: index.md
   - What This Library Solves: what-this-library-solves.md
-  - Next Version: next-version.md
   - Getting Started: getting-started.md
   - Core Concepts:
     - Architecture: architecture.md

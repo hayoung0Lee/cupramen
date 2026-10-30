@@ -66,5 +66,4 @@ umbrella term for both.
 - A BehaviorTree.CPP or ROS 2 executor
 - Deployment-grade timeout, cancellation, or approval policy
 
-These are not presented as v0.1 features. The next version is planned as a separate
-redesign based on a typed Plan IR, validation, BehaviorTree.CPP, and ROS 2.
+These are not presented as v0.1 features.

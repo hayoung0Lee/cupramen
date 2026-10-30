@@ -53,7 +53,7 @@ exclude = ["tests*", "docs*", "examples*"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py314"
+target-version = "py311"
 
 [tool.ruff.format]
 quote-style = "double"

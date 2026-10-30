@@ -95,10 +95,6 @@ flowchart LR
 
 BehaviorOS v0.1 is a Python prototype used to test the idea in Webots.
 
-The next version will not simply extend this prototype. It will redesign the contract
-between plan generation and execution. The proposed architecture and its technical
-choices are explained in [Next Version](next-version.en.md).
-
 !!! warning "Current limitation"
     v0.1 is a research and design prototype. It does not yet provide the schema
     validation, parameter constraints, cancellation, or safety policy required for
@@ -114,4 +110,3 @@ choices are explained in [Next Version](next-version.en.md).
 | [Architecture](architecture.md) | Data flow from command to execution |
 | [Value Resolution](resolution.md) | Connecting one-time and repeatedly computed values |
 | [Getting Started](getting-started.md) | Running the v0.1 Webots prototype |
-| [Next Version](next-version.md) | Planned Plan IR, BehaviorTree.CPP, and ROS 2 redesign |
