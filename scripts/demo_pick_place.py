@@ -18,93 +18,41 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 
-from sim.kinematics import ArmIK, level_reach_seed  # noqa: E402
+from sim.kinematics import ArmIK  # noqa: E402
 from sim.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
 from sim.nav import GridPlanner  # noqa: E402
-from sim.placement import box_side_poses, shelf_front_pose  # noqa: E402
 from sim.world import STOW, World, r, randomize  # noqa: E402
+from shelving.skills import (  # noqa: E402
+    HOVER, carry_pose, plan_box_approach, plan_shelf_approach, route,
+)
 
 CONTROL_EVERY = 10   # physics steps per control tick (20 ms)
-HOVER = 0.03         # tool above lid / cup bottom above shelf board while moving in
-PRESS = 0.003        # tool target this far into the lid so the pad really touches
-LIFT = 0.10          # lift the cup this much out of the box
-BACKOFF = 0.35       # base distance back from a parking pose before driving in / after leaving
-CARRY_TIP = (0.35, 0.0, 1.05)  # tool tip in the base frame while driving with a cup: tucked in
-
-
-def backed_off(pose, dist=BACKOFF):
-    return (pose.x - dist * np.cos(pose.yaw), pose.y - dist * np.sin(pose.yaw), pose.yaw)
 
 
 def plan(world: World, cup_idx: int, slot: int):
     """Choose parking poses and solve every IK pose the demo needs. Returns (phases, meta)."""
     info, ik, d = world.info, ArmIK(world.m), world.d
     cup = world.cup_names()[cup_idx]
-    top = world.cup_top(cup)
     cup_h = float(world.m.site(f"{cup}_top").pos[2])
-
-    def solve(base, target):
-        res = ik.solve(d, target, seed=level_reach_seed(target), base=base)
-        return res if res.ok else None
-
     planner = GridPlanner(info)
     start = world.base_pose()
 
-    # Box side: first side (nearest first) that the base can drive to and where the hover,
-    # press and lift poses all solve.
-    for park in box_side_poses(info["box"]["pos"], info["box"]["yaw"], top[:2]):
-        if planner.plan(start, backed_off(park)) is None:
-            continue
-        b = (park.x, park.y, park.yaw)
-        q_hover, q_press, q_lift = (solve(b, top + [0, 0, dz]) for dz in (HOVER, -PRESS, LIFT))
-        if q_hover and q_press and q_lift:
-            break
-    else:
+    box = plan_box_approach(world, ik, planner, cup, start)
+    if box is None:
         raise RuntimeError(f"{cup}: no box side reachable")
-
-    def clear(base, q):
-        """No robot-vs-furniture contact at this base pose and joint pose (cups ignored)."""
-        return not [c for c in ik.contacts_at(d, q, base) if "cup_" not in c[0] + c[1]]
-
-    # Shelf: park in front of the slot. If the spot to back off to is blocked (e.g. the box
-    # stands close), back off less, then try shifting toward the shelf centre and swinging
-    # arm1 sideways. Every candidate must be reachable and collision-free both where the arm
-    # unfolds (backed off) and over the slot.
-    slot_xyz = d.site(f"slot_{slot}").xpos.copy()
-    sh_pos, sh_yaw = info["shelf"]["pos"], info["shelf"]["yaw"]
-    along = np.array([np.cos(sh_yaw), np.sin(sh_yaw)])          # shelf +x (its width)
-    lateral = float((np.asarray(sh_pos[:2]) - slot_xyz[:2]) @ along)
-    found = False
-    for shift in (0.0, 0.125, 0.25):
-        align_xy = slot_xyz[:2] + along * np.clip(lateral, -shift, shift)
-        shelf_park = shelf_front_pose(sh_pos, sh_yaw, align_xy)
-        s = (shelf_park.x, shelf_park.y, shelf_park.yaw)
-        q_slot_hover = solve(s, slot_xyz + [0, 0, cup_h + HOVER])
-        q_slot_place = solve(s, slot_xyz + [0, 0, cup_h + 0.003])
-        if not (q_slot_hover and q_slot_place and clear(s, q_slot_hover.q)):
-            continue
-        for backoff in (BACKOFF, 0.25, 0.15):
-            shelf_out = backed_off(shelf_park, backoff)
-            if clear(shelf_out, q_slot_hover.q) and planner.plan(backed_off(park), shelf_out):
-                found = True
-                break
-        if found:
-            break
-    if not found:
+    shelf = plan_shelf_approach(world, ik, planner, slot, cup_h, box.out)
+    if shelf is None:
         raise RuntimeError(f"slot_{slot}: no reachable parking pose")
-
-    # Carry pose: same joint values work at any base pose, so solve it for the base at the origin.
-    q_carry = solve((0.0, 0.0, 0.0), np.array(CARRY_TIP))
-    if not q_carry:
+    q_carry = carry_pose(world, ik)
+    if q_carry is None:
         raise RuntimeError("carry pose IK failed")
+    slot_xyz = d.site(f"slot_{slot}").xpos.copy()
 
-    box_out = backed_off(park)
-
-    def route(a, b):
-        pts = planner.plan(a, b)
+    def path(a, b):
+        pts = route(planner, a, b)
         if pts is None:
             raise RuntimeError(f"no path from {np.round(a[:2], 2)} to {np.round(b[:2], 2)}")
-        return [(x, y, b[2]) for x, y in pts[1:]]
+        return pts
 
     def aligned(dz):
         """JointMove that puts the *cup bottom* (not the tool) dz above the slot.
@@ -121,26 +69,27 @@ def plan(world: World, cup_idx: int, slot: int):
             return JointMove(res.q, 1.5)
         return Lazy(factory)
 
+    park, s = box.park, (shelf.park.x, shelf.park.y, shelf.park.yaw)
     slow = dict(vmax=0.12)
     phases = [
-        ("drive to box", BaseMove(route(start, box_out))),
+        ("drive to box", BaseMove(path(start, box.out))),
         ("drive in to box", BaseMove([(park.x, park.y, park.yaw)], **slow)),
-        ("arm over cup", JointMove(q_hover.q, 2.5)),
-        ("descend onto lid", JointMove(q_press.q, 1.5)),
+        ("arm over cup", JointMove(box.q_hover.q, 2.5)),
+        ("descend onto lid", JointMove(box.q_press.q, 1.5)),
         ("suction on", Suction(True)),
         ("let suction grip", Wait(0.3)),
-        ("lift cup", JointMove(q_lift.q, 1.5)),
-        ("back away from box", BaseMove([box_out], **slow)),
+        ("lift cup", JointMove(box.q_lift.q, 1.5)),
+        ("back away from box", BaseMove([box.out], **slow)),
         ("tuck arm with cup", JointMove(q_carry.q, 2.0)),
-        ("drive to shelf", BaseMove(route(box_out, shelf_out))),
-        ("arm to shelf-entry pose", JointMove(q_slot_hover.q, 2.5)),
+        ("drive to shelf", BaseMove(path(box.out, shelf.out))),
+        ("arm to shelf-entry pose", JointMove(shelf.q_hover.q, 2.5)),
         ("drive in to shelf", BaseMove([s], **slow)),
         ("align cup over slot", aligned(HOVER)),
         ("lower cup onto board", aligned(0.003)),
         ("suction off", Suction(False)),
         ("let cup settle", Wait(0.8)),
-        ("raise tool", JointMove(q_slot_hover.q, 1.0)),
-        ("back away from shelf", BaseMove([shelf_out], **slow)),
+        ("raise tool", JointMove(shelf.q_hover.q, 1.0)),
+        ("back away from shelf", BaseMove([shelf.out], **slow)),
         ("stow arm", JointMove(STOW, 2.5)),
     ]
     meta = dict(cup=cup, slot=slot, box_side=park.side)

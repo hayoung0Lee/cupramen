@@ -1,0 +1,9 @@
+{
+  "tree": {
+    "type": "sequence",
+    "name": "B2: go to the box",
+    "children": [
+      {"type": "go_to_box", "name": "Go to box for shinramen", "cup": "cup_shinramen"}
+    ]
+  }
+}
