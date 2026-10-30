@@ -1,0 +1,13 @@
+{
+  "tree": {
+    "type": "sequence",
+    "name": "B3: shelve one cup",
+    "children": [
+      {"type": "go_to_box",     "name": "Go to box",        "cup": "cup_shinramen"},
+      {"type": "pick_cup",      "name": "Pick cup",         "cup": "cup_shinramen"},
+      {"type": "go_to_shelf",   "name": "Carry to shelf",   "cup": "cup_shinramen", "slot": 2},
+      {"type": "place_cup",     "name": "Place cup",        "cup": "cup_shinramen", "slot": 2},
+      {"type": "verify_placed", "name": "Verify placement", "cup": "cup_shinramen", "slot": 2}
+    ]
+  }
+}
