@@ -11,6 +11,8 @@ from typing import Any, Callable
 
 import py_trees
 
+from .decorators import RepeatUntil
+
 
 class UnknownNodeTypeError(ValueError):
     """A JSON node's type is neither a composite nor a registered action."""
@@ -170,6 +172,27 @@ class TreeExecutor:
                 composite.add_child(child)
             return composite
 
+        # Decorators: exactly one child
+        elif node_type == "retry":
+            return py_trees.decorators.Retry(
+                name=name,
+                child=self._single_child(node_data),
+                num_failures=int(self._required(node_data, "num_failures")),
+            )
+
+        elif node_type == "repeat_until":
+            max_iterations = node_data.get("max_iterations")
+            return RepeatUntil(
+                name=name,
+                child=self._single_child(node_data),
+                blackboard=self.blackboard,
+                until=self._required(node_data, "until"),
+                max_iterations=None if max_iterations is None else int(max_iterations),
+            )
+
+        elif node_type == "inverter":
+            return py_trees.decorators.Inverter(name=name, child=self._single_child(node_data))
+
         else:
             # Action node
             registry = get_registry()
@@ -182,6 +205,7 @@ class TreeExecutor:
                 raise UnknownNodeTypeError(
                     f"Node '{name}': unknown type '{node_type}'. "
                     f"Composites: sequence, selector/fallback, parallel. "
+                    f"Decorators: retry, repeat_until, inverter. "
                     f"Registered actions: {', '.join(known) or '(none)'}"
                 )
             params = {
@@ -193,3 +217,21 @@ class TreeExecutor:
             node = action_class(name=name, blackboard=self.blackboard)
             node.params = params
             return node
+
+    def _single_child(self, node_data: dict[str, Any]):
+        children = node_data.get("children", [])
+        if len(children) != 1:
+            raise ValueError(
+                f"Node '{node_data.get('name', node_data.get('type'))}': "
+                f"'{node_data.get('type')}' needs exactly one child, got {len(children)}"
+            )
+        return self._build_node(children[0])
+
+    @staticmethod
+    def _required(node_data: dict[str, Any], key: str):
+        if key not in node_data:
+            raise ValueError(
+                f"Node '{node_data.get('name', node_data.get('type'))}': "
+                f"'{node_data.get('type')}' needs '{key}'"
+            )
+        return node_data[key]
