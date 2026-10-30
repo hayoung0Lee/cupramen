@@ -1,0 +1,601 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/ThreadMetalPlate.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Roughcast.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/WoodenBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/conveyors/protos/ConveyorBelt.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/fire_extinguisher/protos/FireExtinguisher.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/pallet/protos/WoodenPalletStack.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/pallet/protos/WoodenPallet.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/tools/protos/PlatformCart.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/living_room_furniture/protos/Sofa.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/lights/protos/FloorLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/panels/protos/PanelWithTubes.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/PottedTree.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/lights/protos/DoubleFluorescentLamp.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/stairs/protos/StraightStairs.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/BrushedAluminium.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/stairs/protos/StraightStairsRail.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Rubber.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/obstacles/protos/OilBarrel.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/traffic/protos/TrafficCone.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/pal_robotics/tiago/protos/Tiago.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/pal_robotics/tiago_extensions/protos/TiagoRightHey5.proto"
+
+WorldInfo {
+  info [
+    "This simulation shows a TIAGo with Hey5 hand making hello with the sign 'Peace' with these fingers in an industrial environment. It can also be controlled using the arrows on the keyboard."
+  ]
+  title "Simulation of PAL Robotics' TIAGo robot with Hey5 hand"
+}
+Viewpoint {
+  orientation -0.17407774399250883 0.06961057226905713 0.982268449699395 2.393055293438646
+  position -1.6908084037430646 -1.836369346852304 1.8485309763876223
+}
+TexturedBackground {
+  texture "factory"
+  skybox FALSE
+}
+TexturedBackgroundLight {
+  texture "factory"
+}
+RectangleArena {
+  floorSize 15 15
+  floorTileSize 1 1
+  floorAppearance ThreadMetalPlate {
+  }
+  wallHeight 2.5
+  wallAppearance Roughcast {
+    colorOverride 0.533333 0.541176 0.521569
+    textureTransform TextureTransform {
+      scale 5 1.75
+    }
+  }
+}
+DEF ROOF RectangleArena {
+  translation 0 0 2.5
+  rotation 1 0 0 3.141592653589793
+  name "rectangle arena(1)"
+  floorSize 15 15
+  floorTileSize 1 1
+  floorAppearance Roughcast {
+    colorOverride 0.533333 0.541176 0.521569
+    textureTransform TextureTransform {
+      scale 5 1.75
+    }
+  }
+  wallHeight 2.5
+  wallAppearance Roughcast {
+    colorOverride 0.533333 0.541176 0.521569
+    textureTransform TextureTransform {
+      scale 5 1.75
+    }
+  }
+}
+Tiago {
+  hidden position_0_0 -1.1062983231724388e-06
+  hidden position_0_1 -1.0353256731560723e-06
+  hidden position_0_2 0.0010653158282101214
+  hidden position_0_3 -0.0028723278058437884
+  hidden position_0_4 -0.005137070925741227
+  hidden position_0_5 -0.009075855824304035
+  hidden position_1_0 -0.0002498272199051171
+  hidden translation_2 0 0 0.5997501727800949
+  hidden position_2_0 7.17642804105774e-07
+  hidden position_3_0 0.07093409913386615
+  hidden translation_4 0.025099999999782855 0.1939999934099134 -0.171
+  hidden rotation_4 0 0 0.9999999999999999 0.009934099133805809
+  hidden position_4_0 -2.9569086288816493e-05
+  hidden rotation_5 0.9999999997814181 1.4784488835694247e-05 -1.4784543142253828e-05 1.5708000002185816
+  hidden position_5_0 3.759075938651898e-05
+  hidden rotation_6 -0.5774241687187057 -0.577302464952798 0.5773241665987445 2.0944817056770475
+  hidden position_6_0 1.069865298998235e-05
+  hidden rotation_7 -0.5773543870972596 -0.5773482102335278 -0.5773482102160619 2.0943938231408303
+  hidden position_7_0 7.963581320930146e-06
+  hidden rotation_8 -3.981776034516074e-06 -0.9999999999841455 3.981790660422986e-06 1.5708000000158546
+  hidden position_8_0 -2.320279694600913e-06
+  hidden rotation_9 -0.5773493761148175 -0.5773507157246178 -0.5773507157284058 2.0944013396146244
+  hidden position_9_0 2.112628893532217e-06
+  hidden rotation_10 0.577350675762517 0.577349456039535 0.577350675765966 2.0944012197272897
+  hidden position_12_0 1.2112356973474851e-08
+  hidden position_12_1 1.670026903416082e-08
+  hidden position_12_2 1.892220850529034e-08
+  hidden position_12_3 1.8117713168512564e-08
+  hidden position_12_4 1.607719972251384e-08
+  hidden rotation_13 -6.351672230669207e-09 -1 9.311071133659155e-09 1.1344999999999998
+  hidden position_13_0 3.668855647928848e-09
+  hidden rotation_14 -1 1.7276421435023099e-09 2.91477372885189e-09 1.1442
+  hidden position_14_0 2.419502485579702e-09
+  hidden position_15_0 1.6127666796622358e-09
+  hidden position_16_0 8.0320408324995e-10
+  hidden rotation_18 -0.935751948919691 -0.24801376037193337 -0.2507139101828479 1.6478999958581035
+  hidden position_18_0 2.1271487708996225e-08
+  hidden rotation_19 0.9999999999999999 -1.063570478730126e-08 1.0635743854498114e-08 1.5708
+  hidden position_19_0 1.5562617342328077e-08
+  hidden position_20_0 1.185306199774217e-08
+  hidden position_21_0 -7.443983207622296e-09
+  hidden position_22_0 -4.686245169693848e-09
+  hidden position_23_0 1.952704843287584e-09
+  hidden rotation_25 -1 9.461069500132572e-09 9.461104252645172e-09 1.5708
+  hidden position_25_0 -2.42347724110914e-08
+  hidden rotation_26 0.9999999999999999 1.2117341695982597e-08 -1.2117386205545701e-08 1.5708
+  hidden position_26_0 -1.7316803102573886e-08
+  hidden position_27_0 -1.3132274823135504e-08
+  hidden position_28_0 -8.12515638685477e-09
+  hidden position_29_0 -5.262370095238111e-09
+  hidden position_30_0 -2.1844550004866752e-09
+  hidden rotation_32 -0.9831126160261994 0.12940166963796268 0.1294016696377213 1.587800002344462
+  hidden position_32_0 -2.3265349646806044e-08
+  hidden rotation_33 0.9999999999999999 1.1632632094280972e-08 -1.1632674823403024e-08 1.5708
+  hidden position_33_0 -1.6647483391807327e-08
+  hidden position_34_0 -1.2631578169221675e-08
+  hidden position_35_0 -7.846488792040418e-09
+  hidden position_36_0 -5.097027688805156e-09
+  hidden position_37_0 -2.1812498299785623e-09
+  hidden rotation_39 -0.9350940443693234 0.2505984119914035 0.25059841199099525 1.6378000040289205
+  hidden position_39_0 -2.070749083316059e-08
+  hidden rotation_40 1 1.0353707385219641e-08 -1.0353745416580296e-08 1.5708
+  hidden position_40_0 -1.4852556518007987e-08
+  hidden position_41_0 -1.1279065313285668e-08
+  hidden position_42_0 -7.060731176980601e-09
+  hidden position_43_0 -4.6143329157644075e-09
+  hidden position_44_0 -1.847271508431764e-09
+  hidden rotation_46 0 0 1 7.177349673981881e-07
+  hidden position_46_0 -3.5188977598465954e-07
+  hidden rotation_47 0.9999999999999691 1.7594424171185263e-07 -1.7594488799232614e-07 1.5708000000000308
+  hidden translation_56 7.234131427225066e-08 -1.3032928936063115e-07 0.02999594934266335
+  hidden rotation_56 -0.7480258003568987 -0.411324424766307 0.5208355014695984 3.642429932755795e-12
+  hidden rotation_60 0.999999999999694 -5.531471297595151e-07 5.531491615861065e-07 1.570800000000306
+  hidden rotation_61 0.9999999999997321 -5.176609350996628e-07 5.176628365779437e-07 1.570800000000268
+  hidden rotation_62 0 0 1 0.0010653158283513294
+  hidden position_62_0 -0.001252176188939913
+  hidden rotation_63 -0.9999996080152657 -0.0006260856311137884 -0.0006260879308589474 1.570800391984811
+  hidden rotation_64 0 0 -1 0.0028723278057810526
+  hidden position_64_0 -0.00019360475147767175
+  hidden rotation_65 -0.9999999906293344 -9.680201955977655e-05 -9.680237513410185e-05 1.5708000093706656
+  hidden rotation_66 0 0 -1 0.005137070925775868
+  hidden position_66_0 0.0008112721764639577
+  hidden rotation_67 -0.9999998354599908 0.0004056345537548349 0.00040563604373648434 1.5708001645400227
+  hidden rotation_68 0 0 -1 0.009075855824286987
+  hidden position_68_0 0.0018973544351792522
+  hidden rotation_69 -0.9999991000155176 0.0009486731637167084 0.0009486766483942147 1.5708008999848873
+  translation -4.414241501462853 1.0598030202399407 0.08827545034815107
+  rotation 0.8743952925932635 0.4851991071197237 0.0038338937079518656 0.03679517291489464
+  controller "tiago_controller"
+  endEffectorSlot TiagoRightHey5 {
+  }
+}
+WoodenBox {
+  translation -6.2 7 0.405
+}
+WoodenBox {
+  translation -4.6 7 0.405
+  name "wooden box(1)"
+}
+WoodenBox {
+  translation -0.189 0.174 0.3
+  name "wooden box(2)"
+}
+WoodenBox {
+  translation -0.098 0.994 0.3
+  rotation 0 0 1 -2.618
+  name "wooden box(3)"
+}
+WoodenBox {
+  translation 0.248 0.48 0.901
+  rotation 0 0 1 -0.524
+  name "wooden box(4)"
+}
+WoodenBox {
+  translation 0.631 0.397 0.3
+  rotation 0 0 1 0.262
+  name "wooden box(5)"
+}
+WoodenBox {
+  translation -2.99 -4 0.44
+  name "wooden box(6)"
+}
+WoodenBox {
+  translation 0 -4 1.1
+  name "wooden box(7)"
+}
+WoodenBox {
+  translation 3.6 -4 1.1
+  name "wooden box(8)"
+}
+WoodenBox {
+  translation 7.18 -4 1.1
+  name "wooden box(9)"
+}
+WoodenBox {
+  translation 0 -6 1.1
+  name "wooden box(10)"
+}
+WoodenBox {
+  translation 3.6 -6 1.1
+  name "wooden box(11)"
+}
+WoodenBox {
+  translation 7.18 -6 1.1
+  name "wooden box(12)"
+}
+SolidBox {
+  translation 7.49 -4 0.85
+  size 0.03 1.7 1
+  appearance PBRAppearance {
+    baseColor 0 0 0
+    baseColorMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/default/worlds/textures/tagged_wall.jpg"
+      ]
+    }
+    roughness 0.5
+    metalness 0
+  }
+}
+SolidBox {
+  translation 7.49 -6 0.85
+  name "box(1)"
+  size 0.03 1.7 1
+  appearance PBRAppearance {
+    baseColor 0 0 0
+    baseColorMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/default/worlds/textures/tagged_wall.jpg"
+      ]
+    }
+    roughness 0.5
+    metalness 0
+  }
+}
+ConveyorBelt {
+  hidden translation_1 0 0 0.5999843195366724
+  translation 2.47 -4 0
+  rotation 1 0 0 0
+  size 10 0.8 0.8
+  speed 0
+}
+ConveyorBelt {
+  hidden translation_1 0 0 0.5999843195366724
+  translation 2.47 -6 0
+  rotation 1 0 0 0
+  name "conveyor belt(1)"
+  size 10 0.8 0.8
+  speed 0
+}
+FireExtinguisher {
+  translation -1.1799761523382046 7.382254375769683 -0.004807924202480718
+  rotation 0.9999576347423932 -0.002743709008146616 -0.008786397514162339 0.02823529222953772
+}
+WoodenPalletStack {
+  translation -7 6.85 0
+  rotation 0 0 1 -1.5707953071795862
+}
+WoodenPalletStack {
+  translation -5.4 6.85 0
+  rotation 0 0 1 -1.5707953071795862
+  name "wooden pallet stack(1)"
+}
+WoodenPalletStack {
+  translation -3.8 6.85 0
+  rotation 0 0 1 -1.5707953071795862
+  name "wooden pallet stack(2)"
+}
+WoodenPalletStack {
+  translation -2.2 6.85 0
+  rotation 0 0 1 -1.5707953071795862
+  name "wooden pallet stack(3)"
+}
+WoodenPallet {
+  translation -6.24 -5.27 0
+  rotation 0 0 1 1.8326
+}
+WoodenPallet {
+  translation -3.11 -4 0
+  rotation 0 0 -1 -5.307179586466759e-06
+  name "wooden pallet(1)"
+}
+WoodenPallet {
+  translation -3.112 -6 0
+  rotation 0 0 -1 -5.307179586466759e-06
+  name "wooden pallet(2)"
+}
+WoodenPallet {
+  translation -6.274 -5.328 0.141
+  rotation 0 0 1 -0.524
+  name "wooden pallet(3)"
+}
+WoodenPallet {
+  translation -6.318 -5.083 0.282
+  rotation 0 0 1 0.524
+  name "wooden pallet(4)"
+}
+WoodenPallet {
+  translation -6.326 -5.112 0.423
+  name "wooden pallet(5)"
+}
+PlatformCart {
+  hidden position_0_0 -5.7542814561669965e-06
+  hidden position2_0_0 0.004377338901397048
+  hidden position_0_1 -5.747511271619207e-06
+  hidden position2_0_1 0.004376995476475081
+  hidden position_0_2 0.004365401366717742
+  hidden position_0_3 0.004365056094401059
+  hidden rotation_2 0.9999952097545356 0.0021857772810987093 -0.0021915395637772846 1.5708048028511776
+  hidden rotation_3 0.9999952105061605 0.0021856089560056764 -0.002191364467918249 1.5708048020837446
+  hidden rotation_4 0.9999952358541409 0.0021826857334387418 -0.0021826937509058417 1.5708047641572074
+  hidden rotation_5 0.9999952366077285 0.0021825130995593092 -0.0021825211163922884 1.5708047634036164
+  translation 0.4721514214633031 -0.49791251632594613 -0.0030067100570939365
+  rotation 0.0006639283116817858 -0.002460572023257867 0.9999967523869843 0.5240016579359084
+}
+PlatformCart {
+  hidden position_0_0 -5.754281449889017e-06
+  hidden position2_0_0 0.004377338901567008
+  hidden position_0_1 -5.747511279580914e-06
+  hidden position2_0_1 0.004376995476665942
+  hidden position_0_2 0.004365401366879749
+  hidden position_0_3 0.004365056094627036
+  hidden rotation_2 0.9999952097545353 0.002185777281186828 -0.002191539563859126 1.570804802851178
+  hidden rotation_3 0.99999521050616 0.002185608956097125 -0.0021913644680176597 1.5708048020837453
+  hidden rotation_4 0.9999952358541405 0.002182685733519744 -0.002182693750986844 1.570804764157208
+  hidden rotation_5 0.999995236607728 0.0021825130996722965 -0.002182521116505276 1.5708047634036169
+  translation -4.599999982830063 7.000174876677926 -0.003006710057093881
+  rotation 0.000661137156928927 -0.0006590878410273913 0.9999995642503438 1.5708004687458148
+  name "platform cart(1)"
+}
+PlatformCart {
+  hidden position_0_0 -5.754281450875334e-06
+  hidden position2_0_0 0.0043773389014400655
+  hidden position_0_1 -5.747511280128244e-06
+  hidden position2_0_1 0.004376995476587737
+  hidden position_0_2 0.004365401366794739
+  hidden position_0_3 0.004365056094508933
+  hidden rotation_2 0.9999952097545356 0.0021857772811228644 -0.002191539563796148 1.5708048028511776
+  hidden rotation_3 0.9999952105061601 0.00218560895605775 -0.002191364467978832 1.5708048020837448
+  hidden rotation_4 0.9999952358541407 0.002182685733477239 -0.00218269375094434 1.5708047641572078
+  hidden rotation_5 0.9999952366077282 0.0021825130996132452 -0.0021825211164462244 1.5708047634036169
+  translation -6.200000017805401 7.0001748766778595 -0.003006710057093992
+  rotation 0.0006611369523202664 -0.0006589558320299376 0.9999995643374759 1.5710004686586745
+  name "platform cart(2)"
+}
+Sofa {
+  translation 5.586 7.001 0
+  rotation 0 0 1 -1.571
+}
+Sofa {
+  translation 6.99 5.543 0
+  rotation 0 0 1 3.1416
+  name "sofa(1)"
+}
+Table {
+  translation 5.507 5.65 0
+  size 1 1 0.4
+}
+FloorLight {
+  translation 7.073 7.105 0
+}
+PanelWithTubes {
+  translation 7.1 3.65 0
+  rotation 0 0 1 -1.5707953071795862
+}
+PanelWithTubes {
+  translation 6.32 3.65 0
+  rotation 0 0 1 -1.5707953071795862
+  name "panel with tubes(1)"
+}
+PanelWithTubes {
+  translation 5.54 3.65 0
+  rotation 0 0 1 -1.5707953071795862
+  name "panel with tubes(2)"
+}
+PanelWithTubes {
+  translation 4.76 3.65 0
+  rotation 0 0 1 -1.5707953071795862
+  name "panel with tubes(3)"
+}
+PanelWithTubes {
+  translation 3.98 3.65 0
+  rotation 0 0 1 -1.5707953071795862
+  name "panel with tubes(4)"
+}
+PanelWithTubes {
+  translation 3.2 4.47 0
+  rotation 0 0 1 3.14139
+  name "panel with tubes(5)"
+}
+PanelWithTubes {
+  translation 3.2 5.25 0
+  rotation 0 0 1 3.14139
+  name "panel with tubes(6)"
+}
+PanelWithTubes {
+  translation 3.2 6.03 0
+  rotation 0 0 1 3.14139
+  name "panel with tubes(7)"
+}
+PanelWithTubes {
+  translation 2.77 6.45 0
+  rotation 0 0 -1 1.5748
+  name "panel with tubes(8)"
+}
+PottedTree {
+  translation 3.339 3.785 0
+}
+DoubleFluorescentLamp {
+  translation -5 -5 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+}
+DoubleFluorescentLamp {
+  translation -5 0 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(1)"
+}
+DoubleFluorescentLamp {
+  translation -5 5 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(2)"
+}
+DoubleFluorescentLamp {
+  translation 0 -5 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(3)"
+}
+DoubleFluorescentLamp {
+  translation 0 0 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(4)"
+}
+DoubleFluorescentLamp {
+  translation 0 5 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(5)"
+}
+DoubleFluorescentLamp {
+  translation 5 -5 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(6)"
+}
+DoubleFluorescentLamp {
+  translation 5 0 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(7)"
+}
+DoubleFluorescentLamp {
+  translation 5 5 2.5
+  rotation -0.7071067811865475 -0.7071067811865475 0 3.1416
+  name "double fuorescent lamp(8)"
+}
+StraightStairs {
+  translation -6.92 -0.6 0
+  rotation 0 0 1 1.5708
+  stepSize 0.2 1.1 0.03
+  stepRise 0.13
+  nSteps 20
+  stringerWidth 0.03
+  stepAppearance ThreadMetalPlate {
+    textureTransform TextureTransform {
+      scale 0.4 2.2
+    }
+  }
+  stringerAppearance BrushedAluminium {
+    colorOverride 0.533333 0.541176 0.521569
+    textureTransform TextureTransform {
+      scale 20 20
+    }
+  }
+  leftRail []
+  rightRail [
+    StraightStairsRail {
+      translation -0.02 -0.13 0
+      run 3.84
+      rise 2.5
+      newelHeight 0.8
+      balusterHeight 0.62
+      appearance Rubber {
+      }
+    }
+  ]
+}
+OilBarrel {
+  translation -7.18 1.203 0.44
+}
+OilBarrel {
+  translation -7.18 1.9 0.45
+  name "oil barrel(1)"
+}
+OilBarrel {
+  translation -7.18 2.57 0.44
+  name "oil barrel(2)"
+}
+OilBarrel {
+  translation -7.18 3.25 0.44
+  name "oil barrel(3)"
+}
+OilBarrel {
+  translation -7.18 3.95 0.44
+  name "oil barrel(4)"
+}
+OilBarrel {
+  translation -6.55 3.64 0.44
+  name "oil barrel(5)"
+}
+OilBarrel {
+  translation -6.55 2.95 0.44
+  name "oil barrel(6)"
+}
+OilBarrel {
+  translation -6.55 2.26 0.44
+  name "oil barrel(7)"
+}
+OilBarrel {
+  translation -6.55 1.58 0.44
+  name "oil barrel(8)"
+}
+OilBarrel {
+  translation 5.826 -0.356 0.305
+  rotation -0.6778359835355757 0.5198742056615036 0.5198742056615036 -1.95
+  name "oil barrel(9)"
+}
+OilBarrel {
+  translation 5.892 1.534 0.305
+  rotation -0.9353625232302415 -0.25009693134498434 -0.25009693134498434 -1.638
+  name "oil barrel(10)"
+}
+OilBarrel {
+  translation 1.31 5.783 0.44
+  name "oil barrel(11)"
+}
+OilBarrel {
+  translation 1.017 6.932 0.44
+  name "oil barrel(12)"
+}
+OilBarrel {
+  translation -0.08 6.53 0.44
+  name "oil barrel(13)"
+}
+TrafficCone {
+  translation -5.892 -1.397 0
+}
+TrafficCone {
+  translation -5.045 -2.377 0
+  rotation 0 0 1 -0.785
+  name "traffic cone(1)"
+}
+TrafficCone {
+  translation -3.996 -3.072 0
+  rotation 0 0 1 0.262
+  name "traffic cone(2)"
+}
+TrafficCone {
+  translation 6.425 -2.282 0
+  rotation 0 0 1 0.262
+  name "traffic cone(3)"
+}
+TrafficCone {
+  translation 5.034 -2.12 0
+  name "traffic cone(4)"
+}
+TrafficCone {
+  translation 4.128 -1.239 0
+  rotation 0 0 1 -0.262
+  name "traffic cone(5)"
+}
+TrafficCone {
+  translation 4.289 0.082 0
+  rotation 0 0 -1 0.524
+  name "traffic cone(6)"
+}
+TrafficCone {
+  translation 4.158 1.273 0
+  rotation 0 0 1 0.524
+  name "traffic cone(7)"
+}
+TrafficCone {
+  translation 4.317 2.52 0
+  name "traffic cone(8)"
+}

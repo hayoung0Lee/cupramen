@@ -1,0 +1,81 @@
+site_name: BehaviorOS
+site_description: LLM 계획 속 값을 필요한 시점에 계산하는 Behavior Tree 실행 프로토타입
+site_url: https://hayoung0Lee.github.io/behavioros/
+
+theme:
+  name: material
+  language: ko
+  palette:
+    scheme: default
+    primary: white
+    accent: indigo
+  features:
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: ko
+          default: true
+          name: 한국어
+          build: true
+          site_name: BehaviorOS
+          site_description: LLM 계획 속 값을 필요한 시점에 계산하는 Behavior Tree 실행 프로토타입
+          nav_translations:
+            Home: 홈
+            What This Library Solves: 해결하려는 문제
+            Next Version: 다음 버전
+            Getting Started: 시작하기
+            Core Concepts: 핵심 개념
+            Architecture: 아키텍처
+            Actions: 액션
+            Value Resolution: Value Resolution
+            Prompt System: 프롬프트 시스템
+            API Reference: API 레퍼런스
+            Examples: 예제
+        - locale: en
+          name: English
+          build: true
+          site_name: BehaviorOS
+          site_description: A behavior-tree execution prototype that resolves plan values according to when they must be computed
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - What This Library Solves: what-this-library-solves.md
+  - Next Version: next-version.md
+  - Getting Started: getting-started.md
+  - Core Concepts:
+    - Architecture: architecture.md
+    - Actions: actions.md
+    - Value Resolution: resolution.md
+    - Prompt System: prompts.md
+  - API Reference: api.md
+  - Examples: examples.md

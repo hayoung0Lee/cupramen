@@ -1,0 +1,181 @@
+"""
+TreeExecutor with minimal hook support
+"""
+
+from __future__ import annotations
+
+import datetime
+import time
+from dataclasses import dataclass
+from typing import Any, Callable
+
+import py_trees
+
+
+@dataclass
+class TickResult:
+    """Single tick result"""
+
+    tick_count: int
+    status: str
+    timestamp: str
+
+
+@dataclass
+class ExecutionResult:
+    """Final execution result"""
+
+    status: str
+    total_ticks: int
+    duration: float
+    blackboard: dict
+
+
+class TreeExecutor:
+    """TreeExecutor with hook support"""
+
+    def __init__(
+        self,
+        json_data: dict,
+        blackboard: dict = None,
+        tick_callback: Callable | None = None,  # Legacy support
+    ):
+        self.blackboard = blackboard or {}
+        self.tick_count = 0
+        self.tick_callback = tick_callback
+        self.start_time = None
+
+        # Minimal hook system
+        self.before_tick_hooks: list[Callable] = []
+        self.after_tick_hooks: list[Callable] = []
+
+        # Parse and build tree
+        self._parse_json(json_data)
+        self.py_tree = self._build_py_tree()
+        self.tree_data = json_data
+
+    def add_before_tick(self, hook: Callable) -> TreeExecutor:
+        """Add hook to run before tick - hook(blackboard, py_tree)"""
+        self.before_tick_hooks.append(hook)
+        return self
+
+    def add_after_tick(self, hook: Callable) -> TreeExecutor:
+        """Add hook to run after tick - hook(tick_result, blackboard, py_tree)"""
+        self.after_tick_hooks.append(hook)
+        return self
+
+    def tick(self) -> TickResult:
+        """Execute one tick with hooks"""
+        if self.start_time is None:
+            self.start_time = time.time()
+
+        # Before-tick hooks
+        for hook in self.before_tick_hooks:
+            try:
+                hook(self.blackboard, self.py_tree)
+            except Exception as e:
+                print(f"[Hook Error] {e}")
+
+        self.tick_count += 1
+        self.py_tree.tick()
+
+        result = TickResult(
+            tick_count=self.tick_count,
+            status=self.status,
+            timestamp=datetime.datetime.now().isoformat(),
+        )
+
+        # After-tick hooks
+        for hook in self.after_tick_hooks:
+            try:
+                hook(result, self.blackboard, self.py_tree)
+            except Exception as e:
+                print(f"[Hook Error] {e}")
+
+        # Legacy callback
+        if self.tick_callback:
+            self.tick_callback(result, self.py_tree)
+
+        return result
+
+    @property
+    def status(self) -> str:
+        """Get current tree status"""
+        return self.py_tree.root.status.name
+
+    def get_execution_result(self) -> ExecutionResult:
+        """Get current execution result"""
+        duration = time.time() - self.start_time if self.start_time else 0
+        return ExecutionResult(
+            status=self.status,
+            total_ticks=self.tick_count,
+            duration=duration,
+            blackboard=self.blackboard.copy(),
+        )
+
+    def _parse_json(self, json_data: dict):
+        """Parse JSON data"""
+        if "initial_values" in json_data:
+            self.blackboard.update(json_data["initial_values"])
+            self.tree_data = json_data["tree"]
+        elif "tree" in json_data:
+            self.tree_data = json_data["tree"]
+        else:
+            self.tree_data = json_data
+
+    def _build_py_tree(self) -> py_trees.trees.BehaviourTree:
+        """Build py_trees structure"""
+        root = self._build_node(self.tree_data)
+        py_tree = py_trees.trees.BehaviourTree(root)
+        py_tree.setup()
+        return py_tree
+
+    def _build_node(self, node_data: dict[str, Any]):
+        """Convert JSON node to py_trees node"""
+        from .actions import get_registry
+
+        node_type = node_data.get("type")
+        name = node_data.get("name", node_type)
+
+        # Composite nodes
+        if node_type == "sequence":
+            children = [
+                self._build_node(child) for child in node_data.get("children", [])
+            ]
+            composite = py_trees.composites.Sequence(name=name, memory=True)
+            for child in children:
+                composite.add_child(child)
+            return composite
+
+        elif node_type == "selector" or node_type == "fallback":
+            children = [
+                self._build_node(child) for child in node_data.get("children", [])
+            ]
+            composite = py_trees.composites.Selector(name=name, memory=True)
+            for child in children:
+                composite.add_child(child)
+            return composite
+
+        elif node_type == "parallel":
+            children = [
+                self._build_node(child) for child in node_data.get("children", [])
+            ]
+            policy = py_trees.common.ParallelPolicy.SuccessOnAll()
+            composite = py_trees.composites.Parallel(name=name, policy=policy)
+            for child in children:
+                composite.add_child(child)
+            return composite
+
+        else:
+            # Action node
+            registry = get_registry()
+            action_class = registry.get_class(node_type)
+
+            if action_class:
+                for key, value in node_data.items():
+                    if key not in ["type", "name", "children"]:
+                        self.blackboard[key] = value
+                return action_class(name=name, blackboard=self.blackboard)
+            else:
+                print(f"Action {node_type} not found! Using Success fallback")
+                return py_trees.behaviours.Success(name=f"Unknown: {node_type}")

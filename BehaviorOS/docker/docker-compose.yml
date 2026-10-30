@@ -1,0 +1,14 @@
+services:
+  behavioros:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../behavioros:/opt/behavioros/behavioros
+    environment:
+      - DISPLAY=${DISPLAY}
+    #   - OPENAI_API_KEY=${OPENAI_API_KEY}
+    network_mode: host
+    stdin_open: true
+    tty: true
+    command: bash

@@ -1,0 +1,71 @@
+name: Feature Request
+description: 새로운 기능을 제안합니다 (기술 + 감정 기반)
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: 기능 요약
+      description: 어떤 기능을 만들고 싶은가요?
+      placeholder: "예: 사용자 정의 노드 등록 기능"
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 이걸 하려는 이유
+      description: 성과, 재미, 필요 중 어떤 이유인가요? 또는 그냥 해보고 싶어서도 좋아요.
+      placeholder: |
+        예:
+        - 최근 webot 연동하면서 이 컨트롤러가 있으면 편할 것 같았음
+        - 문득 만들면 재밌겠단 생각이 들어서
+        - 오래 미뤄둔 것이라 부담되지만 처리하고 싶음
+    validations:
+      required: false
+
+  - type: dropdown
+    id: emotion
+    attributes:
+      label: 지금 이 작업을 시작할 때 기분은?
+      options:
+        - 😀 기대된다
+        - 😐 그냥 그렇다
+        - 😖 약간 귀찮다
+        - 😣 부담스럽다
+        - 🤔 테스트삼아 해보는 중
+      default: 1
+
+  - type: textarea
+    id: details
+    attributes:
+      label: 상세 설명
+      description: 동작 방식, 인터페이스, 예시 등을 포함해주세요.
+      placeholder: |
+        예: @register_node("Move")처럼 노드를 등록하고,
+            트리에서 "Move" 타입으로 호출될 수 있도록 구성합니다.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 포함 범위
+      options:
+        - label: 테스트 코드 포함
+        - label: 문서/README 반영
+        - label: 예제 코드 제공
+
+  - type: textarea
+    id: reflection
+    attributes:
+      label: 완료 후 감정 기록 (작업 끝나면 작성)
+      description: 이 작업을 끝낸 후 어땠는지 간단히 적어보세요.
+      placeholder: |
+        예:
+        - 예상보다 쉽게 돼서 기분 좋았음
+        - 기대했는데 결과는 좀 밋밋함
+        - 중간에 지치긴 했지만 결과는 만족
+    validations:
+      required: false

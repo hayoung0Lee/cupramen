@@ -1,0 +1,287 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/kuka/youbot/protos/Youbot.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/drinks/protos/Can.proto"
+
+WorldInfo {
+  contactProperties [
+    ContactProperties {
+      material1 "InteriorWheelMat"
+      coulombFriction [
+        1, 0.05
+      ]
+      frictionRotation 0.785398 0.05
+      bounce 0
+    }
+    ContactProperties {
+      material1 "ExteriorWheelMat"
+      coulombFriction [
+        1, 0.05
+      ]
+      frictionRotation -0.785398 0.05
+      bounce 0
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.22948963109571532 -0.028597005422990117 0.9728909088383907 3.3828938558546278
+  position 1.4827297145189609 0.0307534492019665 0.7176365023073087
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 5 5
+  floorAppearance Parquetry {
+    type "light strip"
+  }
+  wallHeight 0.3
+}
+DEF red_cylinder_1 Solid {
+  translation 0.5 0.10999973687457273 0.06096266002091075
+  rotation -4.105617431209777e-15 -7.347942628669608e-15 -1 0.02231231728483019
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.8 0.2 0.2
+        roughness 0.3
+        metalness 0.1
+      }
+      geometry Cylinder {
+        height 0.16
+        radius 0.02
+      }
+    }
+  ]
+  name "red_cylinder_1"
+  contactMaterial "can"
+  boundingObject Cylinder {
+    height 0.16
+    radius 0.02
+  }
+  physics Physics {
+    density -1
+    mass 0.5
+    centerOfMass [
+      0 -0.01 0
+    ]
+    damping Damping {
+      angular 0.5
+    }
+  }
+  recognitionColors [
+    0.8 0.2 0.2
+  ]
+  linearVelocity -9.234641002074316e-17 -1.0038460228839911e-16 1.0658141529538417e-16
+  angularVelocity 1.4111295158655786e-15 -1.3610908355045358e-15 -2.653101422551527e-18
+}
+DEF green_cylinder_1 Solid {
+  translation 0.5004860000007569 -0.08957569996607322 0.059980379999999986
+  rotation -4.105617431209777e-15 -7.347942628669608e-15 -1 0.02231231728483019
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.2 0.8 0.2
+        roughness 0.3
+        metalness 0.1
+      }
+      geometry Cylinder {
+        height 0.16
+        radius 0.02
+      }
+    }
+  ]
+  name "green_cylinder_1"
+  boundingObject Cylinder {
+    height 0.16
+    radius 0.02
+  }
+  physics Physics {
+    density -1
+    mass 0.5
+    centerOfMass [
+      0 -0.01 0
+    ]
+    damping Damping {
+      angular 0.5
+    }
+  }
+  recognitionColors [
+    0.8 0.2 0.2
+  ]
+  linearVelocity -9.234641002074316e-17 -1.0038460228839911e-16 1.0658141529538417e-16
+  angularVelocity 1.4111295158655786e-15 -1.3610908355045358e-15 -2.653101422551527e-18
+}
+DEF target_box Solid {
+  translation 0.5298988286387613 0.5398219999549645 0.009607600059022378
+  rotation 3.1291928068628706e-17 2.795378700976435e-17 1 1.5708000271185762
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.7 0.7 0.9
+        roughness 0.4
+        metalness 0
+      }
+      geometry Box {
+        size 0.25 0.25 0.02
+      }
+    }
+    Pose {
+      translation -0.115 0 0.04
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.7 0.7 0.9
+            roughness 0.4
+            metalness 0
+          }
+          geometry Box {
+            size 0.02 0.25 0.08
+          }
+        }
+      ]
+    }
+    Pose {
+      translation 0.115 0 0.04
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.7 0.7 0.9
+            roughness 0.4
+            metalness 0
+          }
+          geometry Box {
+            size 0.02 0.25 0.08
+          }
+        }
+      ]
+    }
+    Pose {
+      translation 0 -0.115 0.04
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.7 0.7 0.9
+            roughness 0.4
+            metalness 0
+          }
+          geometry Box {
+            size 0.21 0.02 0.08
+          }
+        }
+      ]
+    }
+    Pose {
+      translation 0 0.115 0.04
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.7 0.7 0.9
+            roughness 0.4
+            metalness 0
+          }
+          geometry Box {
+            size 0.21 0.02 0.08
+          }
+        }
+      ]
+    }
+  ]
+  name "target_box"
+  boundingObject Group {
+    children [
+      Box {
+        size 0.25 0.25 0.02
+      }
+      Pose {
+        translation -0.115 0 0.04
+        children [
+          Box {
+            size 0.02 0.25 0.08
+          }
+        ]
+      }
+      Pose {
+        translation 0.115 0 0.04
+        children [
+          Box {
+            size 0.02 0.25 0.08
+          }
+        ]
+      }
+      Pose {
+        translation 0 -0.115 0.04
+        children [
+          Box {
+            size 0.21 0.02 0.08
+          }
+        ]
+      }
+      Pose {
+        translation 0 0.115 0.04
+        children [
+          Box {
+            size 0.21 0.02 0.08
+          }
+        ]
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 1
+  }
+  recognitionColors [
+    0.7 0.7 0.9
+  ]
+  linearVelocity -5.8321274281625854e-18 8.702265462662931e-18 -4.6224369043555924e-10
+  angularVelocity -2.2494761981454523e-16 1.9660931531934012e-31 2.7735620627537145e-17
+}
+DEF youbot Youbot {
+  hidden position_0_0 -3.3427285631362514e-07
+  hidden position_0_1 -1.29485931091282e-07
+  hidden position_0_2 5.97015807369114e-08
+  hidden position_0_3 2.6276910563235573e-07
+  hidden position_3_0 -0.059625595144706674
+  hidden rotation_4 0 0 0.9999999999999999 2.880399563392916
+  hidden position_4_0 0.9344656409984423
+  hidden rotation_5 0 -0.9999999999999999 0 0.9344656409984422
+  hidden position_5_0 1.151877135669532
+  hidden rotation_6 0 -1 0 1.151877135669532
+  hidden position_6_0 0.29946707549629303
+  hidden rotation_7 0 -1 0 0.2994670754962932
+  hidden position_7_0 -6.246440514465309e-12
+  hidden position_8_0 0.02499999986844552
+  hidden position_8_1 0.02500000013154818
+  hidden translation_9 0 0.02499999986844552 0.09
+  hidden translation_10 0 -0.02500000013154818 0.09
+  hidden rotation_11 0 1 0 0.9599780754286085
+  hidden rotation_12 0 1 0 0.9599781513268087
+  hidden rotation_13 0 1 0 0.9599784084459969
+  hidden rotation_14 0 1 0 0.9599785026161223
+  translation 0.0003198281385162912 -0.00015450255893628156 0.09887528389890593
+  rotation 0.17660233825285326 0.9842821036553351 -0.000595438874265418 0.005351505939531355
+  name "youbot"
+  controller "youbot_controller"
+  supervisor TRUE
+  bodySlot [
+    RangeFinder {
+      translation 0.26 0 0
+      fieldOfView 1.8
+      width 320
+      height 240
+      minRange 0.05
+      maxRange 5
+    }
+    Camera {
+      translation 0.26 0 0
+      fieldOfView 1.8
+      width 320
+      height 240
+    }
+  ]
+}

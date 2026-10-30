@@ -1,0 +1,100 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/CircleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/WoodenBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
+
+WorldInfo {
+  basicTimeStep 64
+}
+Viewpoint {
+  orientation -0.265940731469494 -0.6397764224789114 0.7210836682282824 5.2373201057305225
+  position -3.9207173412798864 3.8024410532273287 5.818129047523158
+  follow "TurtleBot3Burger"
+  followType "Pan and Tilt Shot"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+CircleArena {
+  radius 3
+  wallHeight 0.4
+}
+WoodenBox {
+  translation 0.467367 -0.545426 0.15
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation 1.26618 1.07342 0.15
+  name "wooden box(1)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation -0.15697 0.782967 0.15
+  name "wooden box(2)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation -1.62271 1.08968 0.15
+  name "wooden box(3)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation -1.09887 -0.301011 0.15
+  name "wooden box(4)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation -2.71307 -0.22263 0.15
+  name "wooden box(7)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation -0.744103 2.69736 0.15
+  name "wooden box(8)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation 2.30103 0.203241 0.15
+  name "wooden box(9)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation 0.005323 -1.57959 0.15
+  name "wooden box(5)"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation -1.0974 -1.8598 0.15
+  name "wooden box(6)"
+  size 0.3 0.3 0.3
+}
+TurtleBot3Burger {
+  hidden position_0_0 49.427882661643046
+  hidden position_0_1 59.92477326268456
+  hidden position_0_2 -364.05210921961856
+  hidden position2_0_2 -1.472414407799409
+  hidden position3_0_2 -30.992626956049147
+  hidden linearVelocity_0 -0.017902747807247297 -0.046158843112513386 2.2633218475871387e-09
+  hidden angularVelocity_0 3.561293056223517e-07 5.473365832195324e-07 -0.021429063455295428
+  hidden position_1_0 1052.2777599999915
+  hidden position_1_1 2014.5561599999817
+  hidden rotation_2 0.055104075706846375 -0.7060311178655401 -0.7060337112674083 3.2516890566815806
+  hidden translation_3 -0.07820426311727723 -0.01 0.03284639153808494
+  hidden rotation_3 0.28470032800929246 0.6778430304116436 0.6778455202726951 3.696314669958891
+  hidden rotation_8 0 -1 0 2.4083957957936453
+  hidden linearVelocity_8 -0.01791985038129695 -0.04429880284745088 4.8465637941971324e-08
+  hidden angularVelocity_8 1.3374043780740457 -0.5410220639056351 -0.02178921216026937
+  hidden rotation_9 0.6195305924004032 -2.3108175840073618e-06 -0.7849725123051544 3.1415921091760377
+  hidden linearVelocity_9 -0.019205669458648475 -0.0474771390039153 -5.2052052723334345e-08
+  hidden angularVelocity_9 1.4436678727486825 -0.5839849626679964 -0.021831970732297024
+  hidden rotation_10 0.006540630934066835 0.9988976925473483 -0.04648246949730203 4.802023967262579
+  hidden linearVelocity_10 -0.016959193614804864 -0.04653676967063377 8.276935214962956e-09
+  hidden angularVelocity_10 11.63419241773396 -4.2397984034873435 1.636803582422757e-14
+  translation 0.8853009511948322 -1.0317791565389909 -0.0004935214540878752
+  rotation -0.004690464958491837 -0.0031438350052163783 -0.9999840577928897 1.9560801151031795
+  controller "turtlebot_controller"
+}
