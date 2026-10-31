@@ -25,10 +25,19 @@ class GridPlanner:
         self.n = int(round((ARENA[1] - ARENA[0]) / RES))
         c = ARENA[0] + (np.arange(self.n) + 0.5) * RES
         self.xs, self.ys = np.meshgrid(c, c, indexing="ij")
+        self.radius = radius
         self.occ = np.zeros((self.n, self.n), bool)
         self._add_rect(info["box"]["pos"], info["box"]["yaw"], BOX_STAND_HALF, radius)
         self._add_rect(info["shelf"]["pos"], info["shelf"]["yaw"],
                        (SHELF_HALF_WIDTH, SHELF_HALF_DEPTH), radius)
+        self.furniture = self.occ.copy()
+
+    def set_obstacles(self, points, radius: float) -> None:
+        """Extra round obstacles (e.g. cups lying on the floor), replacing earlier ones;
+        cells within `radius` of a point are blocked for the base centre."""
+        self.occ = self.furniture.copy()
+        for x, y in points:
+            self.occ |= np.hypot(self.xs - x, self.ys - y) <= radius
 
     def _add_rect(self, pos, yaw, half, radius):
         dx, dy = self.xs - pos[0], self.ys - pos[1]

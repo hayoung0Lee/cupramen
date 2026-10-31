@@ -44,6 +44,9 @@ class JointMove:
 class BaseMove:
     """Drive the holonomic base through waypoints (x, y, yaw) with a capped P controller."""
 
+    STUCK_S = 3.0
+    STUCK_GAIN = 0.01
+
     def __init__(self, waypoints, vmax: float = 0.4, wmax: float = 0.8,
                  amax: float = 0.4, alpha_max: float = 1.0,
                  pos_tol: float = 0.01, yaw_tol: float = 0.01, pass_tol: float = 0.08):
@@ -54,6 +57,8 @@ class BaseMove:
         self.i = 0
         self.t_last = None
         self.cmd = np.zeros(3)
+        self.stuck = False            # set when the base stops getting closer (see step)
+        self.best, self.t_best = math.inf, None
 
     def step(self, world: World) -> bool:
         d = world.d
@@ -69,6 +74,15 @@ class BaseMove:
         if last and dist < self.pos_tol and abs(eyaw) < self.yaw_tol:
             self.stop(world)
             return True
+        # Blocked? Remaining distance (turning counts too) has not shrunk by STUCK_GAIN in
+        # STUCK_S. Without this a base pushing against something waits for the timeout.
+        remaining = dist + 0.3 * abs(eyaw) + sum(
+            math.dist(self.waypoints[k][:2], self.waypoints[k + 1][:2])
+            for k in range(self.i, len(self.waypoints) - 1))
+        if remaining < self.best - self.STUCK_GAIN or self.t_best is None:
+            self.best, self.t_best = remaining, d.time
+        elif d.time - self.t_best > self.STUCK_S:
+            self.stuck = True
         # P control toward the waypoint; speed also capped so we can still brake within amax
         vcap = min(self.vmax, math.sqrt(2 * self.amax * dist)) if last else self.vmax
         v = e * min(1.5, vcap / max(dist, 1e-6))

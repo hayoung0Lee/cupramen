@@ -67,7 +67,10 @@ def observe(world: World, attempts: dict[str, int] | None = None):
     return cups, slots
 
 
-def nothing_left(cups: dict[str, str], slots: dict[int, str | None]) -> bool:
-    """True when no cup can still be shelved: none in the box or held, or no empty slot."""
+def nothing_left(cups: dict[str, str], slots: dict[int, str | None],
+                 blocked: set[int] = frozenset()) -> bool:
+    """True when no cup can still be shelved: none in the box or held, or no empty slot
+    the robot can get to."""
     todo = [c for c, s in cups.items() if s in ("in_box", "held")]
-    return not todo or None not in slots.values()
+    usable = [k for k, v in slots.items() if v is None and k not in blocked]
+    return not todo or not usable

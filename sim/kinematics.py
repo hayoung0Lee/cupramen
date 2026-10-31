@@ -52,6 +52,7 @@ class ArmIK:
         self.d.qpos[:] = src.qpos
         self.d.mocap_pos[:] = src.mocap_pos
         self.d.mocap_quat[:] = src.mocap_quat
+        self.d.eq_active[:] = src.eq_active      # which cup the pad holds
 
     def solve(
         self,
@@ -117,9 +118,12 @@ class ArmIK:
         return d.site_xpos[self.site].copy()
 
     def contacts_at(self, src: mujoco.MjData, q: dict[str, float],
-                    base: tuple[float, float, float] | None = None) -> list[tuple[str, str]]:
+                    base: tuple[float, float, float] | None = None,
+                    margin: float = 0.0) -> list[tuple[str, str]]:
         """Robot-vs-scene contacts if the robot in state src were moved to q (and base), as a
-        pure collision check."""
+        pure collision check. A cup held by suction moves with the pad and counts as part
+        of the robot. margin > 0 also reports geoms closer than that (the robot's geom
+        margins are raised for this one check and put back)."""
         m, d = self.m, self.d
         self._load(src)
         if base is not None:
@@ -127,10 +131,37 @@ class ArmIK:
                 d.qpos[m.joint(r(j)).qposadr[0]] = v
         for j, v in q.items():
             d.qpos[m.joint(r(j)).qposadr[0]] = v
-        mujoco.mj_forward(m, d)
+        held = self._carry_held_cup()
+        mine = np.array([m.body(m.geom_bodyid[g]).name.startswith(PREFIX)
+                         or m.geom_bodyid[g] == held for g in range(m.ngeom)])
+        saved = m.geom_margin.copy()
+        m.geom_margin[mine] += margin
+        try:
+            mujoco.mj_forward(m, d)
+        finally:
+            m.geom_margin[:] = saved
         out = []
         for c in d.contact[: d.ncon]:
-            n1, n2 = m.geom(c.geom1).name, m.geom(c.geom2).name
-            if n1.startswith(PREFIX) != n2.startswith(PREFIX):
-                out.append((n1, n2))
+            if mine[c.geom1] != mine[c.geom2] and c.dist < margin + 1e-9:
+                n1, n2 = m.geom(c.geom1).name, m.geom(c.geom2).name
+                out.append((n1, n2) if mine[c.geom1] else (n2, n1))
         return out
+
+    def _carry_held_cup(self) -> int:
+        """Move the suction-held cup (if any) to where its weld puts it relative to the pad
+        at the current scratch joints. Returns its body id, or -1."""
+        m, d = self.m, self.d
+        for e in range(m.neq):
+            if not d.eq_active[e] or not m.equality(e).name.startswith("suction_"):
+                continue
+            cup = m.eq_obj2id[e]
+            mujoco.mj_kinematics(m, d)
+            pad = m.eq_obj1id[e]
+            pos, quat = np.zeros(3), np.zeros(4)
+            mujoco.mju_rotVecQuat(pos, m.eq_data[e, 3:6], d.xquat[pad])
+            mujoco.mju_mulQuat(quat, d.xquat[pad], m.eq_data[e, 6:10])
+            adr = m.jnt_qposadr[m.body_jntadr[cup]]
+            d.qpos[adr:adr + 3] = d.xpos[pad] + pos
+            d.qpos[adr + 3:adr + 7] = quat
+            return cup
+        return -1

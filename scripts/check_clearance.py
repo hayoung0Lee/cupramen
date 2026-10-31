@@ -8,7 +8,8 @@ Two checks, per running node:
   visual    the youBot meshes (visual only) penetrating the furniture, measured with
             mj_geomDistance every 0.1 s. Collision shapes smaller than the meshes let the
             robot look as if it went through the box stand while the physics saw no contact.
-Cups are ignored (touching them is the job). An empty report means no contact at all.
+Cups in the box or on the shelf are ignored (touching them is the job); a cup lying on the
+floor (dropped) counts as an obstacle. An empty report means no contact at all.
 """
 
 import argparse
@@ -25,6 +26,7 @@ import numpy as np  # noqa: E402
 
 import shelving.actions  # noqa: E402,F401
 from shelving.faults import FaultInjector  # noqa: E402
+from shelving.skills import floor_cups  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
 from sim.kinematics import ArmIK  # noqa: E402
 from sim.nav import GridPlanner  # noqa: E402
@@ -62,7 +64,9 @@ def check(tree_json, seed, inject=""):
                 faults.on_tick(running_node(), bb)
                 for c in d.contact[: d.ncon]:
                     n1, n2 = m.geom(c.geom1).name, m.geom(c.geom2).name
-                    if n1.startswith(PREFIX) != n2.startswith(PREFIX) and "cup_" not in n1 + n2:
+                    floor = floor_cups(world)
+                    is_cup = "cup_" in n1 + n2 and not any(c in n1 + n2 for c in floor)
+                    if n1.startswith(PREFIX) != n2.startswith(PREFIX) and not is_cup:
                         robot, other = (n1, n2) if n1.startswith(PREFIX) else (n2, n1)
                         key = (running_leaf(), robot, other)
                         physical[key] = min(physical.get(key, 0.0), c.dist)

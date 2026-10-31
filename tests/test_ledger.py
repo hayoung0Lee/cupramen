@@ -98,3 +98,11 @@ def test_done_when_no_empty_slot_or_no_cup(world):
     cups = {"a": "in_box"}
     assert ledger.nothing_left(cups, {1: "x"})
     assert not ledger.nothing_left({"a": "held"}, {1: None})
+
+
+def test_blocked_slots_count_as_unusable(world):
+    # 빈칸이 남아 있어도 로봇이 갈 수 없는 칸(blocked)뿐이면 할 일이 없음 -> 끝.
+    cups = {"a": "held"}
+    assert not ledger.nothing_left(cups, {1: None, 2: None})
+    assert not ledger.nothing_left(cups, {1: None, 2: None}, blocked={1})
+    assert ledger.nothing_left(cups, {1: None, 2: None}, blocked={1, 2})

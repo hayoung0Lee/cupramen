@@ -12,7 +12,7 @@ import numpy as np
 
 from sim.kinematics import ArmIK, IKResult, level_reach_seed
 from sim.nav import GridPlanner
-from sim.placement import BasePose, box_side_poses, shelf_front_pose
+from sim.placement import BasePose, _rot, box_side_poses, shelf_front_pose
 from sim.world import World
 
 HOVER = 0.03         # tool above lid / cup bottom above shelf board while moving in
@@ -50,9 +50,64 @@ def solve_down(world: World, ik: ArmIK, base: Pose, target) -> IKResult | None:
     return res if res.ok else None
 
 
-def clear_of_furniture(world: World, ik: ArmIK, base: Pose, q: dict[str, float]) -> bool:
-    """No robot-vs-box/shelf contact at this base and joint pose (cups ignored)."""
-    return not [c for c in ik.contacts_at(world.d, q, base) if "cup_" not in c[0] + c[1]]
+FLOOR_Z = 0.3            # a cup whose origin is below this lies on the floor
+FLOOR_CUP_CLEARANCE = 0.42  # grid radius around it: chassis half-diagonal 0.345 + cup 0.07.
+                            # A cup on the floor only meets the chassis, not the carried cup,
+                            # so the full ROBOT_RADIUS (0.45 + cup) would block too much.
+
+
+def floor_cups(world: World) -> list[str]:
+    """Cups lying on the floor (dropped): obstacles for the base, out of the arm's reach."""
+    return [c for c in world.cup_names() if world.d.body(c).xpos[2] < FLOOR_Z]
+
+
+def avoid_floor_cups(world: World, planner: GridPlanner) -> None:
+    """Put the dropped cups into the planner's grid, so routes go around them."""
+    planner.set_obstacles([world.d.body(c).xpos[:2] for c in floor_cups(world)], FLOOR_CUP_CLEARANCE)
+
+
+def clear_of_furniture(world: World, ik: ArmIK, base: Pose, q: dict[str, float],
+                       margin: float = 0.0) -> bool:
+    """No robot contact with the box, the shelf or a cup on the floor at this base and joint
+    pose (nothing closer than `margin`). Cups in the box or on the shelf are ignored
+    (touching them is the job); so is the cup in the hand."""
+    floor = floor_cups(world)
+
+    def counts(name):
+        return "cup_" not in name or any(name.startswith(c) for c in floor)
+
+    # contacts_at gives (robot or held cup, other)
+    return not any(counts(other) for _, other in ik.contacts_at(world.d, q, base, margin))
+
+
+SWEEP_MARGIN = 0.01   # keep this far from everything along a checked motion
+
+
+def creep_clear(world: World, ik: ArmIK, out: Pose, park: Pose, q: dict[str, float],
+                step: float = 0.02) -> bool:
+    """The straight drive from `out` in to `park` with the arm at q touches nothing."""
+    n = max(1, int(np.ceil(np.hypot(park[0] - out[0], park[1] - out[1]) / step)))
+    return all(clear_of_furniture(world, ik, tuple(np.add(out, np.subtract(park, out) * k / n)), q,
+                                  SWEEP_MARGIN)
+               for k in range(n + 1))
+
+
+def tool_line(world: World, ik: ArmIK, base: Pose, q_from: dict[str, float],
+              tip_to, n: int = 8) -> dict[str, float] | None:
+    """Replay a ToolLine from the pose q_from to tip_to with the base at `base`: IK along
+    the line seeded from the previous step, as ToolLine does. Returns the joints it ends
+    with, or None if a pose on the way touches something.
+
+    The end joints matter: the arm can put the tool at one point with several poses (more
+    lift and a straighter arm, or less lift and a raised elbow), and ToolLine ends on
+    whichever its steps lead to, not necessarily on the pose a plan solved for."""
+    a = ik.tool_tip_at(world.d, q_from, base)
+    q = q_from
+    for k in range(1, n + 1):
+        q = ik.solve(world.d, a + (np.asarray(tip_to) - a) * k / n, seed=q, base=base).q
+        if not clear_of_furniture(world, ik, base, q, SWEEP_MARGIN):
+            return None
+    return q
 
 
 @dataclass
@@ -80,6 +135,8 @@ def plan_box_approach(world: World, ik: ArmIK, planner: GridPlanner, cup: str,
     """
     info = world.info
     top = world.cup_top(cup)
+    avoid_floor_cups(world, planner)
+    floor = floor_cups(world)
     best, best_key = None, None
     for park in box_side_poses(info["box"]["pos"], info["box"]["yaw"], top[:2]):
         if park.side in skip_sides:
@@ -91,6 +148,8 @@ def plan_box_approach(world: World, ik: ArmIK, planner: GridPlanner, cup: str,
         q = [solve_down(world, ik, b, top + [0, 0, dz]) for dz in (HOVER, -PRESS, LIFT)]
         if not all(q):
             continue
+        if floor and not creep_clear(world, ik, backed_off(park), b, q[0].q):
+            continue                                     # a dropped cup is in the way
         # Same targets with the base REACH_MARGIN farther back = the cup that much farther.
         spare = all(solve_down(world, ik, backed_off(park, REACH_MARGIN), top + [0, 0, dz])
                     for dz in (HOVER, -PRESS))
@@ -122,15 +181,31 @@ def plan_shelf_approach(world: World, ik: ArmIK, planner: GridPlanner, slot: int
     """Parking in front of `slot`. If the spot to back off to is blocked (e.g. the box
     stands close), back off less, then try shifting toward the shelf centre and swinging
     arm1 sideways. A candidate must be reachable and collision-free both where the arm
-    unfolds (backed off) and over the slot."""
+    unfolds (backed off) and over the slot.
+
+    Only if all of those are blocked (a dropped cup lying in front of the shelf), try the
+    wider set: shifted up to 0.35 m either way and turned up to ~30 deg, nearest first."""
     info, d = world.info, world.d
     slot_xyz = d.site(f"slot_{slot}").xpos.copy()
     sh_pos, sh_yaw = info["shelf"]["pos"], info["shelf"]["yaw"]
     along = np.array([np.cos(sh_yaw), np.sin(sh_yaw)])          # shelf +x (its width)
     lateral = float((np.asarray(sh_pos[:2]) - slot_xyz[:2]) @ along)
-    for shift in (0.0, 0.125, 0.25):
-        park = shelf_front_pose(sh_pos, sh_yaw, slot_xyz[:2] + along * np.clip(lateral, -shift, shift))
-        s = (park.x, park.y, park.yaw)
+    avoid_floor_cups(world, planner)
+    floor = floor_cups(world)
+
+    def pose(offset: float, turn: float = 0.0) -> Pose:
+        """In front of the slot, `offset` along the shelf, turned `turn` about the slot."""
+        p = shelf_front_pose(sh_pos, sh_yaw, slot_xyz[:2] + along * offset)
+        xy = slot_xyz[:2] + _rot(turn) @ (np.array([p.x, p.y]) - slot_xyz[:2])
+        return (float(xy[0]), float(xy[1]), float(p.yaw + turn))
+
+    usual = [pose(float(np.clip(lateral, -shift, shift))) for shift in (0.0, 0.125, 0.25)]
+    wider = sorted(((off, turn) for off in np.arange(-0.35, 0.351, 0.05)
+                    for turn in (0.0, 0.25, -0.25, 0.5, -0.5)),
+                   key=lambda c: abs(c[0]) + 0.5 * abs(c[1]))
+    candidates = usual + ([pose(off, turn) for off, turn in wider] if floor else [])
+    for s in candidates:
+        park = BasePose(*s, "front")
         q_hover = solve_down(world, ik, s, slot_xyz + [0, 0, cup_h + HOVER])
         q_place = solve_down(world, ik, s, slot_xyz + [0, 0, cup_h + 0.003])
         if not (q_hover and q_place and clear_of_furniture(world, ik, s, q_hover.q)):
@@ -139,12 +214,24 @@ def plan_shelf_approach(world: World, ik: ArmIK, planner: GridPlanner, slot: int
             out = backed_off(park, backoff)
             if not (clear_of_furniture(world, ik, out, q_hover.q) and planner.plan(start, out)):
                 continue
+            if floor and not creep_clear(world, ik, out, s, q_hover.q):
+                continue                                 # a dropped cup is in the way
             heading = np.array([np.cos(out[2]), np.sin(out[2])])
             ready_xy = np.asarray(out[:2]) + READY_REACH * heading
             hover_z = float(slot_xyz[2] + cup_h + HOVER)
             q_ready = solve_down(world, ik, out, [ready_xy[0], ready_xy[1], hover_z])
-            if q_ready and clear_of_furniture(world, ik, out, q_ready.q):
-                return ShelfPlan(slot, park, out, q_hover, q_place, q_ready)
+            if not (q_ready and clear_of_furniture(world, ik, out, q_ready.q)):
+                continue
+            # With a dropped cup about, unusual parking poses come into play: check the
+            # whole way in (arm down outside, reach in level, drive in), not just its ends.
+            if floor:
+                q_carry = solve_down(world, ik, out, base_frame_point(out, CARRY_TIP))
+                q1 = q_carry and tool_line(world, ik, out, q_carry.q,
+                                           ik.tool_tip_at(d, q_ready.q, out))
+                q2 = q1 and tool_line(world, ik, out, q1, ik.tool_tip_at(d, q_hover.q, out))
+                if not (q2 and creep_clear(world, ik, out, s, q2)):
+                    continue
+            return ShelfPlan(slot, park, out, q_hover, q_place, q_ready)
     return None
 
 

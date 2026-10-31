@@ -25,6 +25,7 @@ from shelving.skills import (
 )
 from sim.motion import BaseMove, JointMove, Lazy, ToolLine, Wait
 from sim.placement import BOX_STAND_HALF, BasePose, _rot
+from sim.world import PREFIX
 
 RUNNING = py_trees.common.Status.RUNNING
 SUCCESS = py_trees.common.Status.SUCCESS
@@ -118,6 +119,11 @@ class SimAction(BaseAction):
             stage = stage.inner
         if stage.step(world):
             self.stages.pop(0)
+        elif getattr(stage, "stuck", False):          # BaseMove made no progress
+            BaseMove.stop(world)
+            touching = {n for pair in world.robot_scene_contacts() for n in pair
+                        if not n.startswith(PREFIX) and "floor" not in n}
+            return self.fail("blocked", touching=sorted(touching))
         return SUCCESS if not self.stages else RUNNING
 
 
@@ -317,6 +323,7 @@ class VerifyPlaced(SimAction):
 #   cups           {cup name: state}, states in shelving/ledger.py
 #   slots          {slot number: cup name or None}
 #   attempts       {cup name: recoveries spent on it}
+#   blocked_slots  slots the robot could not get to (e.g. a dropped cup in front of them)
 #   current_cup    cup being handled now      (nodes read it as "${current_cup}")
 #   current_slot   slot it is going to        (nodes read it as "${current_slot}")
 #   all_cups_done  True when nothing is left to do (repeat_until stops on it)
@@ -335,7 +342,8 @@ class LedgerAction(SimAction):
         cups, slots = ledger.observe(self.world, self.read_blackboard("attempts"))
         self.write_blackboard("cups", cups)
         self.write_blackboard("slots", slots)
-        self.write_blackboard("all_cups_done", ledger.nothing_left(cups, slots))
+        blocked = self.read_blackboard("blocked_slots", set())
+        self.write_blackboard("all_cups_done", ledger.nothing_left(cups, slots, blocked))
         _print_ledger(self.blackboard)
 
 
@@ -343,11 +351,12 @@ class LedgerAction(SimAction):
     "init_episode",
     "Start the ledger from what the scene shows (normally: every cup in the box).",
     reads=["world"],
-    writes=["cups", "slots", "attempts", "recoveries", "all_cups_done"],
+    writes=["cups", "slots", "attempts", "blocked_slots", "recoveries", "all_cups_done"],
 )
 class InitEpisode(LedgerAction):
     def execute(self):
         self.write_blackboard("attempts", {})
+        self.write_blackboard("blocked_slots", set())
         self.write_blackboard("recoveries", 0)
         self.refresh_ledger()
         return SUCCESS
@@ -357,7 +366,7 @@ class InitEpisode(LedgerAction):
     "select_next_task",
     "Choose the next cup (the one in the hand, else the nearest still in the box) and "
     "slot (lowest empty).",
-    reads=["world", "cups", "slots"],
+    reads=["world", "cups", "slots", "blocked_slots"],
     writes=["current_cup", "current_slot", "all_cups_done"],
 )
 class SelectNextTask(SimAction):
@@ -365,7 +374,9 @@ class SelectNextTask(SimAction):
         world, cups = self.world, self.read_blackboard("cups")
         held = [c for c, s in cups.items() if s == "held"]
         in_box = [c for c, s in cups.items() if s == "in_box"]
-        empty = [k for k, v in self.read_blackboard("slots").items() if v is None]
+        blocked = self.read_blackboard("blocked_slots", set())
+        empty = [k for k, v in self.read_blackboard("slots").items()
+                 if v is None and k not in blocked]
         if not (held or in_box) or not empty:
             self.write_blackboard("all_cups_done", True)
             return self.fail("nothing_left", cups_in_box=len(in_box), empty_slots=len(empty))
@@ -408,8 +419,9 @@ class MarkPlaced(LedgerAction):
     "recover",
     "After a failed cup: stop, bring the arm back to the carry pose clear of the "
     "furniture, count the attempt, and rebuild the ledger from the scene.",
-    reads=["world", "ik", "planner", "last_failure", "current_cup", "attempts"],
-    writes=["cups", "slots", "attempts", "recoveries", "all_cups_done", "last_failure"],
+    reads=["world", "ik", "planner", "last_failure", "current_cup", "current_slot", "attempts"],
+    writes=["cups", "slots", "attempts", "blocked_slots", "recoveries", "all_cups_done",
+            "last_failure"],
 )
 class Recover(LedgerAction):
     """Runs as the fallback of "shelve one cup". Always SUCCESS, so the loop goes on and
@@ -421,7 +433,11 @@ class Recover(LedgerAction):
                                tool out of a shelf level)
       3. tool in to the ready distance at its height, then up to the carry pose
     A held cup stays held: the next round sees it in the ledger and carries it on.
+    If the slot could not be reached (no parking spot, blocked, timeout on the way), the
+    slot goes on blocked_slots and the next round picks another one.
     """
+
+    SLOT_FAILURES = ("no_shelf_spot", "blocked", "timeout")
 
     NEAR_FURNITURE = 1.0   # base centre within this of the box or shelf centre
 
@@ -435,7 +451,10 @@ class Recover(LedgerAction):
             cup = self.read_blackboard("current_cup")
             print(f"    [{self.name}] after '{failure.get('reason')}' in "
                   f"'{failure.get('node')}' ({cup}): making safe, then re-planning")
-            self.stages = self.safe_stages(world) + [Do(lambda w: self.finish(cup))]
+            slot = None
+            if failure.get("action") == "go_to_shelf" and failure.get("reason") in self.SLOT_FAILURES:
+                slot = self.read_blackboard("current_slot")
+            self.stages = self.safe_stages(world) + [Do(lambda w: self.finish(cup, slot))]
         return self.run_stages()
 
     def safe_stages(self, world):
@@ -462,7 +481,10 @@ class Recover(LedgerAction):
         stages.append(Lazy(lambda w: ToolLine(ik, base_frame_point(w.base_pose(), CARRY_TIP), 1.5)))
         return stages
 
-    def finish(self, cup):
+    def finish(self, cup, blocked_slot=None):
+        if blocked_slot is not None:
+            self.read_blackboard("blocked_slots").add(int(blocked_slot))
+            print(f"    [{self.name}] slot_{blocked_slot} blocked, will use another slot")
         attempts = self.read_blackboard("attempts")
         if cup is not None:
             attempts[cup] = attempts.get(cup, 0) + 1
