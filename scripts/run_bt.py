@@ -2,6 +2,8 @@
 
     mjpython scripts/run_bt.py trees/b2_go_to_box.json --seed 0          # watch in the viewer
     python   scripts/run_bt.py trees/b2_go_to_box.json --seed 0 --headless
+    python   scripts/run_bt.py trees/b5_recovery.json --seed 0 --headless --inject seal:0.3
+             (faults: shelving/faults.py)
 
 Loop (same role as the Webots controller's execution_loop, in one process):
   every 2 ms   mj_step          physics
@@ -22,6 +24,7 @@ import mujoco  # noqa: E402
 import py_trees  # noqa: E402
 
 import shelving.actions  # noqa: E402,F401  (registers the actions)
+from shelving.faults import FaultInjector  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
 from sim.kinematics import ArmIK  # noqa: E402
 from sim.nav import GridPlanner  # noqa: E402
@@ -35,11 +38,17 @@ def tree_snapshot(root):
     return tuple((n.name, n.status.name) for n in root.iterate())
 
 
+def running_leaf(root):
+    return next((n for n in root.iterate() if n.status.name == "RUNNING" and not n.children),
+                None)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("tree", type=Path, help="JSON tree file")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--headless", action="store_true")
+    ap.add_argument("--inject", default="", help="faults, e.g. seal-fail:1,drop-carry:4 (shelving/faults.py)")
     args = ap.parse_args()
 
     world = World.create()
@@ -52,6 +61,7 @@ def main():
         .with_runtime()
         .build()
     )
+    faults = FaultInjector(args.inject, world, args.seed)
     log = randomize.MobilityLog(m, r("base_link"), info)
     print(f"seed {args.seed}: tree {args.tree.name}")
 
@@ -61,6 +71,7 @@ def main():
         """One physics step; tick the tree every CONTROL_EVERY steps."""
         if state["result"] is None and state["k"] % CONTROL_EVERY == 0:
             res = tree.tick()
+            faults.on_tick(running_leaf(tree.py_tree.root), blackboard)
             snap = tree_snapshot(tree.py_tree.root)
             if snap != state["last"]:
                 print(f"\n--- t={d.time:6.2f}s  tick {res.tick_count}: {res.status}")
@@ -80,8 +91,14 @@ def main():
               f"{result.duration:.1f} s sim time, base path {s['path_length_m']:.2f} m "
               f"(x{s['path_vs_reference']:.2f} of straight-line reference), "
               f"count_placed {placed}/6")
+        for t, what in faults.events:
+            print(f"  injected at t={t:.1f}s: {what}")
         for f in blackboard.get("failure_log", []):
             print(f"  failure at t={f['time']:.1f}s in '{f['node']}': {f['reason']} {f['detail']}")
+        print(f"  recoveries (recover node): {blackboard.get('recoveries', 0)}")
+        if "cups" in blackboard:
+            print("  ledger: " + ", ".join(f"{c.removeprefix('cup_')}={s}"
+                                           for c, s in blackboard["cups"].items()))
 
     if args.headless:
         while state["result"] is None and d.time < TIME_LIMIT_S:

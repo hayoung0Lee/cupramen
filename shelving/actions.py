@@ -18,15 +18,17 @@ import numpy as np
 import py_trees
 
 from behavioros.core.actions import BaseAction, action
+from shelving import ledger
 from shelving.skills import (
-    CARRY_TIP, HOVER, LIFT, PRESS, base_frame_point, carry_pose, plan_box_approach,
-    plan_shelf_approach, route, solve_down,
+    BACKOFF, CARRY_TIP, HOVER, LIFT, PRESS, READY_REACH, backed_off, base_frame_point,
+    carry_pose, plan_box_approach, plan_shelf_approach, route, solve_down,
 )
-from sim.motion import BaseMove, JointMove, ToolLine, Wait
-from sim.world import STOW
+from sim.motion import BaseMove, JointMove, Lazy, ToolLine, Wait
+from sim.placement import BOX_STAND_HALF, BasePose, _rot
 
 RUNNING = py_trees.common.Status.RUNNING
 SUCCESS = py_trees.common.Status.SUCCESS
+FAILURE = py_trees.common.Status.FAILURE
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +147,7 @@ class GoToBox(SimAction):
             plan = plan_box_approach(world, self.ik, self.planner, cup, start)
             if plan is None:
                 return self.fail("no_box_side", cup=cup)
-            path = route(self.planner, start, plan.out)
+            path = route(self.planner, start, plan.out) or [plan.out]  # [] if already there
             self.write_blackboard("box_plan", plan)
             park = (plan.park.x, plan.park.y, plan.park.yaw)
             self.stages = [BaseMove(path), BaseMove([park], vmax=0.12)]
@@ -235,7 +237,7 @@ class GoToShelf(SimAction):
             ready_tip = self.ik.tool_tip_at(world.d, plan.q_ready.q, plan.out)
             reach_in_tip = self.ik.tool_tip_at(world.d, plan.q_hover.q, plan.out)
             self.stages = [
-                Guarded(BaseMove(route(self.planner, start, plan.out)), holding(cup)),
+                Guarded(BaseMove(route(self.planner, start, plan.out) or [plan.out]), holding(cup)),
                 Guarded(ToolLine(self.ik, ready_tip, 2.0), holding(cup)),     # down, outside
                 Guarded(ToolLine(self.ik, reach_in_tip, 1.5), holding(cup)),  # reach in level
                 Guarded(BaseMove([park], vmax=0.12), holding(cup)),
@@ -312,11 +314,15 @@ class VerifyPlaced(SimAction):
 
 # ---------------------------------------------------------------------------
 # Task bookkeeping: the world-state ledger on the blackboard
-#   cups           {cup name: "in_box" | "placed" | "dropped" | "skipped"}
+#   cups           {cup name: state}, states in shelving/ledger.py
 #   slots          {slot number: cup name or None}
+#   attempts       {cup name: recoveries spent on it}
 #   current_cup    cup being handled now      (nodes read it as "${current_cup}")
 #   current_slot   slot it is going to        (nodes read it as "${current_slot}")
 #   all_cups_done  True when nothing is left to do (repeat_until stops on it)
+#   recoveries     how many times recover ran
+# The ledger is always rebuilt from the simulation (ledger.observe), never edited by
+# hand: after a failure the plan says little about where the cups really are.
 # ---------------------------------------------------------------------------
 def _print_ledger(bb):
     cups = ", ".join(f"{c.removeprefix('cup_')}={s}" for c, s in bb["cups"].items())
@@ -324,37 +330,48 @@ def _print_ledger(bb):
     print(f"    ledger | cups: {cups}\n           | slots: {slots}")
 
 
+class LedgerAction(SimAction):
+    def refresh_ledger(self):
+        cups, slots = ledger.observe(self.world, self.read_blackboard("attempts"))
+        self.write_blackboard("cups", cups)
+        self.write_blackboard("slots", slots)
+        self.write_blackboard("all_cups_done", ledger.nothing_left(cups, slots))
+        _print_ledger(self.blackboard)
+
+
 @action(
     "init_episode",
-    "Start the ledger: every cup in the box, every slot empty.",
+    "Start the ledger from what the scene shows (normally: every cup in the box).",
     reads=["world"],
-    writes=["cups", "slots", "all_cups_done"],
+    writes=["cups", "slots", "attempts", "recoveries", "all_cups_done"],
 )
-class InitEpisode(SimAction):
+class InitEpisode(LedgerAction):
     def execute(self):
-        self.write_blackboard("cups", {c: "in_box" for c in self.world.cup_names()})
-        self.write_blackboard("slots", {k: None for k in range(1, 7)})
-        self.write_blackboard("all_cups_done", False)
-        _print_ledger(self.blackboard)
+        self.write_blackboard("attempts", {})
+        self.write_blackboard("recoveries", 0)
+        self.refresh_ledger()
         return SUCCESS
 
 
 @action(
     "select_next_task",
-    "Choose the next cup (still in the box, nearest to the robot) and slot (lowest empty).",
+    "Choose the next cup (the one in the hand, else the nearest still in the box) and "
+    "slot (lowest empty).",
     reads=["world", "cups", "slots"],
     writes=["current_cup", "current_slot", "all_cups_done"],
 )
 class SelectNextTask(SimAction):
     def execute(self):
-        world = self.world
-        in_box = [c for c, s in self.read_blackboard("cups").items() if s == "in_box"]
+        world, cups = self.world, self.read_blackboard("cups")
+        held = [c for c, s in cups.items() if s == "held"]
+        in_box = [c for c, s in cups.items() if s == "in_box"]
         empty = [k for k, v in self.read_blackboard("slots").items() if v is None]
-        if not in_box or not empty:
+        if not (held or in_box) or not empty:
             self.write_blackboard("all_cups_done", True)
             return self.fail("nothing_left", cups_in_box=len(in_box), empty_slots=len(empty))
         base = np.array(world.base_pose()[:2])
-        cup = min(in_box, key=lambda c: float(np.linalg.norm(world.cup_top(c)[:2] - base)))
+        cup = held[0] if held else \
+            min(in_box, key=lambda c: float(np.linalg.norm(world.cup_top(c)[:2] - base)))
         slot = min(empty)
         self.write_blackboard("current_cup", cup)
         self.write_blackboard("current_slot", slot)
@@ -363,18 +380,92 @@ class SelectNextTask(SimAction):
 
 
 @action(
+    "is_holding",
+    "Condition: SUCCESS if the pad holds the cup, else FAILURE (not an error).",
+    reads=["world"],
+)
+class IsHolding(SimAction):
+    """params: cup. Lets a fallback skip fetching a cup that is already in the hand,
+    e.g. after recovering from a failure at the shelf."""
+
+    def execute(self):
+        return SUCCESS if self.world.held_cup() == self.param("cup") else FAILURE
+
+
+@action(
     "mark_placed",
-    "Record the current cup as placed on the current slot; set all_cups_done when finished.",
-    reads=["current_cup", "current_slot", "cups", "slots"],
+    "Look at the scene again after a verified placement; set all_cups_done when finished.",
+    reads=["world", "attempts"],
     writes=["cups", "slots", "all_cups_done"],
 )
-class MarkPlaced(SimAction):
+class MarkPlaced(LedgerAction):
     def execute(self):
-        cup, slot = self.param("cup"), int(self.param("slot"))
-        cups, slots = self.read_blackboard("cups"), self.read_blackboard("slots")
-        cups[cup] = "placed"
-        slots[slot] = cup
-        done = "in_box" not in cups.values() or None not in slots.values()
-        self.write_blackboard("all_cups_done", done)
-        _print_ledger(self.blackboard)
+        self.refresh_ledger()
         return SUCCESS
+
+
+@action(
+    "recover",
+    "After a failed cup: stop, bring the arm back to the carry pose clear of the "
+    "furniture, count the attempt, and rebuild the ledger from the scene.",
+    reads=["world", "ik", "planner", "last_failure", "current_cup", "attempts"],
+    writes=["cups", "slots", "attempts", "recoveries", "all_cups_done", "last_failure"],
+)
+class Recover(LedgerAction):
+    """Runs as the fallback of "shelve one cup". Always SUCCESS, so the loop goes on and
+    the next round re-plans from wherever the robot and the cups are now.
+
+    Making the robot safe, whatever it was doing:
+      1. tool over the box  -> raise it straight up (do not sweep through the cups)
+      2. near box or shelf  -> back the base straight out (reverses the creep in, pulls the
+                               tool out of a shelf level)
+      3. tool in to the ready distance at its height, then up to the carry pose
+    A held cup stays held: the next round sees it in the ledger and carries it on.
+    """
+
+    NEAR_FURNITURE = 1.0   # base centre within this of the box or shelf centre
+
+    def execute(self):
+        if self.stages is None:
+            world = self.world
+            BaseMove.stop(world)
+            if self.read_blackboard("all_cups_done"):        # e.g. select found nothing
+                return SUCCESS
+            failure = self.read_blackboard("last_failure") or {}
+            cup = self.read_blackboard("current_cup")
+            print(f"    [{self.name}] after '{failure.get('reason')}' in "
+                  f"'{failure.get('node')}' ({cup}): making safe, then re-planning")
+            self.stages = self.safe_stages(world) + [Do(lambda w: self.finish(cup))]
+        return self.run_stages()
+
+    def safe_stages(self, world):
+        info, ik = world.info, self.ik
+        stages = []
+        x, y, yaw = world.base_pose()
+        box_local = _rot(info["box"]["yaw"]).T @ (world.tool_tip()[:2] - np.asarray(info["box"]["pos"][:2]))
+        if abs(box_local[0]) < BOX_STAND_HALF[0] + 0.05 and abs(box_local[1]) < BOX_STAND_HALF[1] + 0.05:
+            tip = world.tool_tip()
+            stages.append(ToolLine(ik, [tip[0], tip[1], max(tip[2], CARRY_TIP[2])], 1.5))
+        near = min(np.linalg.norm(np.array([x, y]) - np.asarray(info[k]["pos"][:2]))
+                   for k in ("box", "shelf"))
+        back = backed_off(BasePose(x, y, yaw, ""), BACKOFF)
+        if near < self.NEAR_FURNITURE and self.planner.free(back[:2]):
+            stages.append(BaseMove([back], vmax=0.12))
+
+        def tool_in(w):
+            base, tip = w.base_pose(), w.tool_tip()
+            c, s = np.cos(base[2]), np.sin(base[2])
+            left = float((tip[:2] - np.asarray(base[:2])) @ [-s, c])
+            return ToolLine(ik, base_frame_point(base, (READY_REACH, left, tip[2])), 1.5)
+
+        stages.append(Lazy(tool_in))
+        stages.append(Lazy(lambda w: ToolLine(ik, base_frame_point(w.base_pose(), CARRY_TIP), 1.5)))
+        return stages
+
+    def finish(self, cup):
+        attempts = self.read_blackboard("attempts")
+        if cup is not None:
+            attempts[cup] = attempts.get(cup, 0) + 1
+        self.write_blackboard("recoveries", self.read_blackboard("recoveries", 0) + 1)
+        self.write_blackboard("last_failure", None)          # handled
+        self.refresh_ledger()

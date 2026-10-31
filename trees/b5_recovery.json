@@ -1,0 +1,33 @@
+{
+  "tree": {
+    "type": "sequence",
+    "name": "B5: shelve all cups, recover from failures",
+    "children": [
+      {"type": "init_episode", "name": "Init ledger"},
+      {"type": "repeat_until", "name": "Until all cups done", "until": "all_cups_done", "max_iterations": 20,
+       "children": [
+        {"type": "selector", "name": "One cup, or recover", "children": [
+          {"type": "sequence", "name": "One cup", "children": [
+            {"type": "select_next_task", "name": "Select cup and slot"},
+            {"type": "selector", "name": "Have the cup", "children": [
+              {"type": "is_holding", "name": "Already holding it?", "cup": "${current_cup}"},
+              {"type": "sequence", "name": "Fetch it", "children": [
+                {"type": "retry", "name": "Retry go to box", "num_failures": 2, "children": [
+                  {"type": "go_to_box", "name": "Go to box", "cup": "${current_cup}"}
+                ]},
+                {"type": "retry", "name": "Retry pick", "num_failures": 3, "children": [
+                  {"type": "pick_cup", "name": "Pick cup", "cup": "${current_cup}"}
+                ]}
+              ]}
+            ]},
+            {"type": "go_to_shelf",   "name": "Carry to shelf",   "cup": "${current_cup}", "slot": "${current_slot}"},
+            {"type": "place_cup",     "name": "Place cup",        "cup": "${current_cup}", "slot": "${current_slot}"},
+            {"type": "verify_placed", "name": "Verify placement", "cup": "${current_cup}", "slot": "${current_slot}"},
+            {"type": "mark_placed",   "name": "Mark placed"}
+          ]},
+          {"type": "recover", "name": "Recover"}
+        ]}
+      ]}
+    ]
+  }
+}
