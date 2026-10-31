@@ -13,7 +13,7 @@ import numpy as np
 from sim.kinematics import ArmIK, IKResult, level_reach_seed
 from sim.nav import GridPlanner
 from sim.placement import BasePose, _rot, box_side_poses, shelf_front_pose
-from sim.world import World
+from sim.world import PREFIX, World
 
 HOVER = 0.03         # tool above lid / cup bottom above shelf board while moving in
 PRESS = 0.003        # tool target this far into the lid so the pad really touches
@@ -67,17 +67,19 @@ def avoid_floor_cups(world: World, planner: GridPlanner) -> None:
 
 
 def clear_of_furniture(world: World, ik: ArmIK, base: Pose, q: dict[str, float],
-                       margin: float = 0.0) -> bool:
+                       margin: float = 0.0, held_cup: bool = True) -> bool:
     """No robot contact with the box, the shelf or a cup on the floor at this base and joint
     pose (nothing closer than `margin`). Cups in the box or on the shelf are ignored
-    (touching them is the job); so is the cup in the hand."""
+    (touching them is the job). The cup in the hand counts as part of the robot unless
+    held_cup=False (a person putting it down on the board is meant to touch the board)."""
     floor = floor_cups(world)
 
     def counts(name):
         return "cup_" not in name or any(name.startswith(c) for c in floor)
 
     # contacts_at gives (robot or held cup, other)
-    return not any(counts(other) for _, other in ik.contacts_at(world.d, q, base, margin))
+    return not any(counts(other) for mine, other in ik.contacts_at(world.d, q, base, margin)
+                   if held_cup or mine.startswith(PREFIX))
 
 
 SWEEP_MARGIN = 0.01   # keep this far from everything along a checked motion

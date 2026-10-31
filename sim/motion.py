@@ -38,7 +38,7 @@ class JointMove:
         if s < 1.0:
             return False
         err = max(abs(float(d.joint(r(j)).qpos[0]) - q1) for j, q1 in self.target.items())
-        return err < self.tol or d.time - self.t0 > self.duration + 1.0
+        return err < self.tol or d.time - self.t0 > self.duration + self.settle
 
 
 class BaseMove:
@@ -186,9 +186,13 @@ class ToolLine:
     moves along the line and IK is re-solved every step from the current joints.
     """
 
-    def __init__(self, ik, target, duration: float = 1.5, tol: float = 0.005):
+    def __init__(self, ik, target, duration: float = 1.5, tol: float = 0.005,
+                 axis_tol: float | None = None, settle: float = 1.0):
         self.ik, self.target = ik, np.asarray(target, float)
-        self.duration, self.tol = duration, tol
+        self.duration, self.tol, self.settle = duration, tol, settle
+        # How straight down the tool must point. The IK default (0.03 rad) moves the bottom
+        # of a held cup ~11 cm below the pad by ~3 mm; fine teleop steps need it tighter.
+        self.solve_opts = {} if axis_tol is None else {"axis_tol": axis_tol}
         self.t0 = None
         self.p0 = None
 
@@ -198,10 +202,11 @@ class ToolLine:
             self.t0, self.p0 = d.time, world.tool_tip()
         s = min(1.0, (d.time - self.t0) / self.duration)
         s = s * s * (3 - 2 * s)
-        res = self.ik.solve(d, self.p0 + s * (self.target - self.p0), seed=world.joint_positions())
+        res = self.ik.solve(d, self.p0 + s * (self.target - self.p0), seed=world.joint_positions(),
+                            **self.solve_opts)
         for j, q in res.q.items():
             d.actuator(r(POSITION_ACTUATOR[j])).ctrl = q
         if s < 1.0:
             return False
         err = float(np.linalg.norm(world.tool_tip() - self.target))
-        return err < self.tol or d.time - self.t0 > self.duration + 1.0
+        return err < self.tol or d.time - self.t0 > self.duration + self.settle

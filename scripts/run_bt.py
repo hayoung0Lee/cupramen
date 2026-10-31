@@ -6,6 +6,8 @@
              (faults: shelving/faults.py)
     python   scripts/run_bt.py trees/b5_recovery.json --seed 0 --headless --csv results/results.csv
              (writes this seed's row in the results_template.csv format; other rows kept)
+    mjpython scripts/run_bt.py trees/b6_takeover.json --seed 0
+             (stage 2: press t in this terminal to take over at the shelf, ? for keys)
 
 Loop (same role as the Webots controller's execution_loop, in one process):
   every 2 ms   mj_step          physics
@@ -25,15 +27,20 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 import mujoco  # noqa: E402
+import numpy as np  # noqa: E402
 import py_trees  # noqa: E402
 
 import shelving.actions  # noqa: E402,F401  (registers the actions)
 from shelving.faults import FaultInjector  # noqa: E402
+from shelving.teleop import NoOperator, Operator, ScriptedOperator, start_terminal_keys  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
 from sim.kinematics import ArmIK  # noqa: E402
 from sim.nav import GridPlanner  # noqa: E402
 from sim.world import World, r, randomize  # noqa: E402
 
+KEYS_LEFT = "type in the TERMINAL\nw / s\na / d\nr / f\nW S A D R F\ni k j l / u o\ng / space\nh"
+KEYS_RIGHT = ("\ntool forward / back 1 cm\ntool left / right 1 cm\ntool up / down 1 cm\n"
+              "same, 2 mm\nbase 5 cm / turn 5 deg\ngrip / release\nhand back to the robot")
 CONTROL_EVERY = 10      # physics steps per tick: 10 x 2 ms = 20 ms
 TIME_LIMIT_S = 600.0    # simulation seconds before giving up
 
@@ -50,7 +57,8 @@ CSV_FIELDS = ["seed", "success_count", "total_cups", "duration_s", "path_length_
 def results_row(seed, blackboard, placed, summary, reference_m, duration_s, inject):
     """One CSV row. failures: every failure the tree recorded (end of work excluded).
     recoveries: failures whose cup still ended up on the shelf."""
-    log = [f for f in blackboard.get("failure_log", []) if f["reason"] != "nothing_left"]
+    not_faults = ("nothing_left", "operator_takeover")   # end of work; the person asked
+    log = [f for f in blackboard.get("failure_log", []) if f["reason"] not in not_faults]
     cups = blackboard.get("cups", {})
     recovered = [f for f in log if cups.get(f["detail"].get("cup")) == "placed"]
     counts = collections.Counter(f["reason"] for f in log)
@@ -100,12 +108,26 @@ def main():
     ap.add_argument("--headless", action="store_true")
     ap.add_argument("--inject", default="", help="faults, e.g. seal-fail:1,drop-carry:4 (shelving/faults.py)")
     ap.add_argument("--csv", type=Path, help="write this run's row to a results CSV")
+    ap.add_argument("--full-tree", action="store_true",
+                    help="print the whole tree on every change (default unless a person drives)")
+    ap.add_argument("--operator", default=None,
+                    help="keyboard (default with the viewer), none (default headless), "
+                         "or script:KEYS e.g. script:t,s,f,space,h (shelving/teleop.py)")
     args = ap.parse_args()
 
     world = World.create()
     info = world.reset(args.seed)
     m, d = world.m, world.d
-    blackboard = {"world": world, "ik": ArmIK(m), "planner": GridPlanner(info)}
+    mode = args.operator or ("none" if args.headless else "keyboard")
+    if mode == "keyboard":
+        operator = Operator()
+        start_terminal_keys(operator)
+    elif mode.startswith("script:"):
+        operator = ScriptedOperator(mode.removeprefix("script:"))
+    else:
+        operator = NoOperator()
+    blackboard = {"world": world, "ik": ArmIK(m), "planner": GridPlanner(info),
+                  "operator": operator, "human_interventions": 0}
     tree = (
         TreeBuilder(json.loads(args.tree.read_text()), blackboard, devices={"world": world},
                     clock=lambda: d.time)
@@ -116,18 +138,27 @@ def main():
     log = randomize.MobilityLog(m, r("base_link"), info)
     print(f"seed {args.seed}: tree {args.tree.name}")
 
-    state = {"k": 0, "last": None, "result": None}
+    state = {"k": 0, "last": None, "leaf": None, "result": None}
+    # With a person at the keyboard the full tree printouts would bury the teleop messages:
+    # print one line per running action instead.
+    full_tree = args.full_tree or mode != "keyboard"
 
     def step():
         """One physics step; tick the tree every CONTROL_EVERY steps."""
         if state["result"] is None and state["k"] % CONTROL_EVERY == 0:
             res = tree.tick()
             faults.on_tick(running_leaf(tree.py_tree.root), blackboard)
+            if isinstance(operator, ScriptedOperator):
+                operator.tick()
             snap = tree_snapshot(tree.py_tree.root)
-            if snap != state["last"]:
+            if full_tree and snap != state["last"]:
                 print(f"\n--- t={d.time:6.2f}s  tick {res.tick_count}: {res.status}")
                 print(py_trees.display.unicode_tree(tree.py_tree.root, show_status=True).rstrip())
                 state["last"] = snap
+            leaf = running_leaf(tree.py_tree.root)
+            if not full_tree and leaf is not None and leaf is not state["leaf"]:
+                print(f"  t={d.time:6.1f}s  {leaf.name}")
+                state["leaf"] = leaf
             if res.status in ("SUCCESS", "FAILURE"):
                 state["result"] = res.status
         mujoco.mj_step(m, d)
@@ -146,7 +177,8 @@ def main():
             print(f"  injected at t={t:.1f}s: {what}")
         for f in blackboard.get("failure_log", []):
             print(f"  failure at t={f['time']:.1f}s in '{f['node']}': {f['reason']} {f['detail']}")
-        print(f"  recoveries (recover node): {blackboard.get('recoveries', 0)}")
+        print(f"  recoveries (recover node): {blackboard.get('recoveries', 0)}, "
+              f"human interventions: {blackboard.get('human_interventions', 0)}")
         if "cups" in blackboard:
             print("  ledger: " + ", ".join(f"{c.removeprefix('cup_')}={s}"
                                            for c, s in blackboard["cups"].items()))
@@ -168,6 +200,9 @@ def main():
         viewer.cam.distance = 5.0
         viewer.cam.elevation = -35
         reported = False
+        overview = (viewer.cam.lookat.copy(), viewer.cam.distance, viewer.cam.azimuth,
+                    viewer.cam.elevation)
+        last_mode = "auto"
         while viewer.is_running():
             t0 = time.time()
             for _ in range(8):  # ~real time
@@ -175,6 +210,26 @@ def main():
             if state["result"] and not reported:
                 report()
                 reported = True
+            if operator.mode != last_mode:
+                if operator.mode == "human":
+                    # Close-up for the person: from behind and to the right of the robot,
+                    # looking down at the tool, so 2 mm steps are visible.
+                    overview = (viewer.cam.lookat.copy(), viewer.cam.distance,
+                                viewer.cam.azimuth, viewer.cam.elevation)
+                    viewer.cam.lookat[:] = world.tool_tip() - [0, 0, 0.08]
+                    viewer.cam.distance = 0.9
+                    viewer.cam.azimuth = float(np.degrees(world.base_pose()[2])) - 40
+                    viewer.cam.elevation = -25
+                elif last_mode == "human":
+                    (viewer.cam.lookat[:], viewer.cam.distance, viewer.cam.azimuth,
+                     viewer.cam.elevation) = overview
+                last_mode = operator.mode
+            title, detail = operator.overlay() if not state["result"] else ("DONE", state["result"])
+            texts = [(None, mujoco.mjtGridPos.mjGRID_TOPLEFT, title, detail)]
+            if operator.mode == "human":
+                texts.append((mujoco.mjtFontScale.mjFONTSCALE_100, mujoco.mjtGridPos.mjGRID_BOTTOMLEFT,
+                              KEYS_LEFT, KEYS_RIGHT))
+            viewer.set_texts(texts)
             viewer.sync()
             time.sleep(max(0.0, 0.016 - (time.time() - t0)))
 
