@@ -95,6 +95,12 @@ class SimAction(BaseAction):
         self.stages = None          # None = not planned yet (first tick plans)
         self.started_at = self.now()
 
+    def fail(self, reason, **detail):
+        """BaseAction.fail, plus the cup being handled, so the report can tell which
+        failures were recovered from (the cup still ended up on the shelf)."""
+        detail.setdefault("cup", self.read_blackboard("current_cup"))
+        return super().fail(reason, **detail)
+
     def run_stages(self):
         """Advance by one tick. SUCCESS when every stage is done; FAILURE on a broken check."""
         world = self.world

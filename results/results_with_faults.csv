@@ -1,0 +1,6 @@
+seed,success_count,total_cups,duration_s,path_length_m,reference_path_m,path_vs_reference,human_interventions,failures,recoveries,notes
+0,5,6,282.4,23.26,22.88,1.02,0,6,5,"seal_failed x3; cup_dropped x2; no_shelf_spot x1; not shelved: saewootang=lost; blocked slots: 2; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
+1,5,6,333.7,23.4,19.95,1.17,0,13,10,"seal_failed x10; cup_dropped x2; no_shelf_spot x1; not shelved: ojingeozzamppong=lost; blocked slots: 2; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
+2,5,6,285.3,25.87,19.54,1.32,0,6,5,"seal_failed x3; cup_dropped x2; no_shelf_spot x1; not shelved: nugoori=lost; blocked slots: 4; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
+3,5,6,292.6,32.0,41.01,0.78,0,5,4,"seal_failed x3; cup_dropped x2; not shelved: twigimwoodong=lost; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
+4,4,6,282.2,17.27,16.45,1.05,0,12,11,"seal_failed x8; cup_dropped x2; no_shelf_spot x2; not shelved: saewootang=lost twigimwoodong=in_box; blocked slots: 1 4; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
