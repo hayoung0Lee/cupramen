@@ -41,7 +41,7 @@ def create_tree(
     resolved_tree = static.process(tree_json)
 
     # Create tree
-    tree = TreeExecutor(resolved_tree, blackboard, clock=clock)
+    tree = TreeExecutor(resolved_tree, blackboard, clock=clock, devices=devices)
 
     # Add runtime resolution
     if enable_runtime:

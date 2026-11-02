@@ -127,7 +127,7 @@ def plan_shelf_approach(world: World, ik: ArmIK, planner: GridPlanner, slot: int
 @action(
     "go_to_shelf",
     "Carry the held cup to a parking pose in front of the slot and creep in, arm ready.",
-    reads=["world", "ik", "planner"],
+    reads=[],
     writes=["shelf_plan"],
 )
 class GoToShelf(SimAction):

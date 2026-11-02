@@ -14,7 +14,7 @@ from shelving.utils.motion import BaseMove, ToolLine, Wait
     "place_cup",
     "Lower the held cup onto the slot (correcting for where it sits on the pad), release, "
     "back away and fold the arm up outside the shelf.",
-    reads=["world", "ik", "shelf_plan"],
+    reads=["shelf_plan"],
 )
 class PlaceCup(SimAction):
     """params: cup, slot. Stops (fails with operator_takeover) before the release if the
@@ -63,7 +63,7 @@ class PlaceCup(SimAction):
     "verify_placed",
     "Check the cup stands on the slot: centre within 15 mm and tilt within 5 deg "
     "(the same test as the provided count_placed).",
-    reads=["world"],
+    reads=[],
 )
 class VerifyPlaced(SimAction):
     """params: cup, slot."""

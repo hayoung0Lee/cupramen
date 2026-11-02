@@ -67,11 +67,12 @@ def holding(cup):
 class SimAction(BaseAction):
     """Common helpers for actions that run stages in the simulation.
 
-    Shared objects come from the blackboard (put there by scripts/run_bt.py):
-      world     sim.world.World               the MuJoCo scene and robot
-      ik        shelving.utils.kinematics.ArmIK
-      planner   shelving.utils.nav.GridPlanner      occupancy grid for this episode's layout
-      operator  shelving.utils.teleop.Operator      stage 2 (nobody if absent)
+    Objects come from the tree's devices (self.devices, set up by scripts/run_bt.py); the
+    blackboard only carries data between nodes (current cup, ledger, failures ...):
+      world     sim.world.World                   the MuJoCo scene and robot
+      ik        shelving.utils.kinematics.ArmIK   arm math
+      planner   shelving.utils.nav.GridPlanner    map and paths for this episode's layout
+      operator  shelving.utils.teleop.Operator    stage 2 (nobody if absent)
     """
 
     timeout_s = 60.0
@@ -79,20 +80,20 @@ class SimAction(BaseAction):
 
     @property
     def world(self):
-        return self.read_blackboard("world")
+        return self.devices["world"]
 
     @property
     def ik(self):
-        return self.read_blackboard("ik")
+        return self.devices["ik"]
 
     @property
     def planner(self):
-        return self.read_blackboard("planner")
+        return self.devices["planner"]
 
     @property
     def operator(self):
         """The stage-2 operator (shelving/utils/teleop.py); nobody if the runner set none."""
-        return self.read_blackboard("operator") or NO_OPERATOR
+        return self.devices.get("operator") or NO_OPERATOR
 
     def reset(self):
         self.stages = None          # None = not planned yet (first tick plans)

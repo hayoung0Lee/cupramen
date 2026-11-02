@@ -37,8 +37,9 @@ def check(tree_json, seed, inject=""):
     world = World.create()
     info = world.reset(seed)
     m, d = world.m, world.d
-    bb = {"world": world, "ik": ArmIK(m), "planner": GridPlanner(info)}
-    tree = TreeBuilder(tree_json, bb, devices={}, clock=lambda: d.time).build()
+    devices = {"world": world, "ik": ArmIK(m), "planner": GridPlanner(info)}
+    bb = {}                                   # data between nodes only
+    tree = TreeBuilder(tree_json, bb, devices=devices, clock=lambda: d.time).build()
     faults = FaultInjector(inject, world, seed)
 
     def body(g):

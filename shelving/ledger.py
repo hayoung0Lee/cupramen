@@ -112,7 +112,7 @@ class LedgerAction(SimAction):
 @action(
     "init_episode",
     "Start the ledger from what the scene shows (normally: every cup in the box).",
-    reads=["world"],
+    reads=[],
     writes=["cups", "slots", "attempts", "blocked_slots", "recoveries", "all_cups_done"],
 )
 class InitEpisode(LedgerAction):
@@ -128,7 +128,7 @@ class InitEpisode(LedgerAction):
     "select_next_task",
     "Choose the next cup (the one in the hand, else the nearest still in the box) and "
     "slot (lowest empty).",
-    reads=["world", "cups", "slots", "blocked_slots"],
+    reads=["cups", "slots", "blocked_slots"],
     writes=["current_cup", "current_slot", "all_cups_done"],
 )
 class SelectNextTask(SimAction):
@@ -155,7 +155,7 @@ class SelectNextTask(SimAction):
 @action(
     "is_holding",
     "Condition: SUCCESS if the pad holds the cup, else FAILURE (not an error).",
-    reads=["world"],
+    reads=[],
 )
 class IsHolding(SimAction):
     """params: cup. Lets a fallback skip fetching a cup that is already in the hand,
@@ -168,7 +168,7 @@ class IsHolding(SimAction):
 @action(
     "mark_placed",
     "Look at the scene again after a verified placement; set all_cups_done when finished.",
-    reads=["world", "attempts"],
+    reads=["attempts"],
     writes=["cups", "slots", "all_cups_done"],
 )
 class MarkPlaced(LedgerAction):

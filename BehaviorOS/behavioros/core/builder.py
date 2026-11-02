@@ -27,7 +27,7 @@ class TreeBuilder:
         resolved_tree = static.process(tree_json)
 
         # Create tree
-        self.tree = TreeExecutor(resolved_tree, blackboard, clock=clock)
+        self.tree = TreeExecutor(resolved_tree, blackboard, clock=clock, devices=devices)
         self.resolved_tree = resolved_tree
         self.devices = devices
 

@@ -46,8 +46,12 @@ class TreeExecutor:
         blackboard: dict = None,
         tick_callback: Callable | None = None,  # Legacy support
         clock: Callable[[], float] | None = None,
+        devices: dict | None = None,
     ):
         self.blackboard = {} if blackboard is None else blackboard
+        # Objects the actions use (robot, simulator, planners), handed to every action as
+        # self.devices. Kept out of the blackboard, which is for data passed between nodes.
+        self.devices = {} if devices is None else devices
         self.tick_count = 0
         self.tick_callback = tick_callback
         # Source of time for durations and for actions (self.now()). Pass the simulation
@@ -229,6 +233,7 @@ class TreeExecutor:
             node = action_class(name=name, blackboard=self.blackboard)
             node.params = params
             node.clock = self.clock
+            node.devices = self.devices
             return node
 
     def _single_child(self, node_data: dict[str, Any]):

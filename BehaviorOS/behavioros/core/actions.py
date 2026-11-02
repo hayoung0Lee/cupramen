@@ -69,6 +69,9 @@ class BaseAction(py_trees.behaviour.Behaviour, ABC):
         self.params: Dict[str, Any] = {}
         # The tree's clock (set by TreeExecutor); wall clock when used on its own.
         self.clock = time.time
+        # The tree's devices (set by TreeExecutor): objects such as the robot. The
+        # blackboard is for data passed between nodes.
+        self.devices: Dict[str, Any] = {}
 
     @abstractmethod
     def execute(self) -> py_trees.common.Status:

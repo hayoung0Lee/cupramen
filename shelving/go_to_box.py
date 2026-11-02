@@ -109,7 +109,7 @@ def path_length(start: Pose, path) -> float:
 @action(
     "go_to_box",
     "Drive to a parking pose beside the box from which the cup can be picked.",
-    reads=["world", "ik", "planner"],
+    reads=[],
     writes=["box_plan"],
 )
 class GoToBox(SimAction):

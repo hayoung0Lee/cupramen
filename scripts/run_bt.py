@@ -126,10 +126,11 @@ def main():
         operator = ScriptedOperator(mode.removeprefix("script:"))
     else:
         operator = NoOperator()
-    blackboard = {"world": world, "ik": ArmIK(m), "planner": GridPlanner(info),
-                  "operator": operator, "human_interventions": 0}
+    # Objects the nodes use go to devices; the blackboard carries only data between nodes.
+    devices = {"world": world, "ik": ArmIK(m), "planner": GridPlanner(info), "operator": operator}
+    blackboard = {"human_interventions": 0}
     tree = (
-        TreeBuilder(json.loads(args.tree.read_text()), blackboard, devices={"world": world},
+        TreeBuilder(json.loads(args.tree.read_text()), blackboard, devices=devices,
                     clock=lambda: d.time)
         .with_runtime()
         .build()

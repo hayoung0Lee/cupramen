@@ -42,7 +42,7 @@ def describe(failure) -> str:
     "check_place_ready",
     "Condition before the robot puts the cup down: FAILURE (-> human) if the operator "
     "wants to take over or the cup sits too tilted / off-centre on the pad.",
-    reads=["world", "operator"],
+    reads=[],
 )
 class CheckPlaceReady(SimAction):
     """params: cup, optional max_tilt_deg, max_offset_m.
@@ -71,7 +71,7 @@ class CheckPlaceReady(SimAction):
 @action(
     "operator_available",
     "Condition: SUCCESS if someone is at the keyboard (else the robot places by itself).",
-    reads=["operator"],
+    reads=[],
 )
 class OperatorAvailable(SimAction):
     def execute(self):
@@ -82,7 +82,7 @@ class OperatorAvailable(SimAction):
     "request_takeover",
     "Stop and ask the operator for help (the reason is the last failure); SUCCESS once "
     "the operator has taken over, FAILURE if nobody is at the keyboard.",
-    reads=["world", "operator", "last_failure"],
+    reads=["last_failure"],
     writes=["human_interventions"],
 )
 class RequestTakeover(SimAction):
@@ -112,7 +112,7 @@ class RequestTakeover(SimAction):
     "human_control",
     "The operator drives with the keyboard (tool, base, grip/release); SUCCESS when they hand "
     "back (h). Moves that would hit the box, the shelf or a dropped cup are refused.",
-    reads=["world", "ik", "operator", "current_cup", "current_slot"],
+    reads=["current_cup", "current_slot"],
 )
 class HumanControl(SimAction):
     timeout_s = 1e9
@@ -215,7 +215,7 @@ class HumanControl(SimAction):
     "back_away",
     "Bring the robot clear of the shelf after the operator handed back (arm out of the "
     "shelf, carry pose).",
-    reads=["world", "ik", "planner"],
+    reads=[],
 )
 class BackAway(SimAction):
     def execute(self):

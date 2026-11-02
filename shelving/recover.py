@@ -12,7 +12,7 @@ from shelving.utils.motion import BaseMove
     "recover",
     "After a failed cup: stop, bring the arm back to the carry pose clear of the "
     "furniture, count the attempt, and rebuild the ledger from the scene.",
-    reads=["world", "ik", "planner", "last_failure", "current_cup", "current_slot", "attempts"],
+    reads=["last_failure", "current_cup", "current_slot", "attempts"],
     writes=["cups", "slots", "attempts", "blocked_slots", "recoveries", "all_cups_done",
             "last_failure"],
 )

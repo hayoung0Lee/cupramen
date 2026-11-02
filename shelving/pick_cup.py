@@ -18,7 +18,7 @@ def carry_pose(world: World, ik: ArmIK) -> IKResult | None:
 @action(
     "pick_cup",
     "At the box: lower the pad onto the cup lid, seal, lift, back away and tuck the arm.",
-    reads=["world", "ik", "box_plan"],
+    reads=["box_plan"],
 )
 class PickCup(SimAction):
     """params: cup.
