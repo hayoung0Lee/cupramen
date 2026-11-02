@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 
-import shelving.actions  # noqa: E402,F401
+import shelving  # noqa: E402,F401  (registers the Behavior Tree nodes)
 from shelving.faults import FaultInjector  # noqa: E402
 from shelving.common import floor_cups  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402

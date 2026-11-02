@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from behavioros.core.actions import action
-from shelving.actions.base import SimAction
+from shelving.action_base import SimAction
 from shelving.common import (
     BASE_HALF_LENGTH, BOX_INTERIOR_HALF, BOX_STAND_HALF, GAP, HOVER, LIFT, PRESS, BasePose, Pose,
     avoid_floor_cups, backed_off, creep_clear, floor_cups, rot2d, route, solve_down, to_world,

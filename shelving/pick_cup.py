@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from behavioros.core.actions import action
-from shelving.actions.base import Check, Guarded, SimAction, holding
+from shelving.action_base import Check, Guarded, SimAction, holding
 from shelving.common import CARRY_TIP, HOVER, LIFT, PRESS, solve_down
 from shelving.kinematics import ArmIK, IKResult
 from shelving.motion import BaseMove, JointMove, Wait

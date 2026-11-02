@@ -22,9 +22,9 @@ from shelving.kinematics import ArmIK  # noqa: E402
 from shelving.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
 from shelving.nav import GridPlanner  # noqa: E402
 from sim.world import STOW, World, r, randomize  # noqa: E402
-from shelving.actions.go_to_box import plan_box_approach  # noqa: E402
-from shelving.actions.go_to_shelf import plan_shelf_approach  # noqa: E402
-from shelving.actions.pick_cup import carry_pose  # noqa: E402
+from shelving.go_to_box import plan_box_approach  # noqa: E402
+from shelving.go_to_shelf import plan_shelf_approach  # noqa: E402
+from shelving.pick_cup import carry_pose  # noqa: E402
 from shelving.common import HOVER, route  # noqa: E402
 
 CONTROL_EVERY = 10   # physics steps per control tick (20 ms)

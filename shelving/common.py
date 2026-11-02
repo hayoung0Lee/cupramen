@@ -1,7 +1,7 @@
 """What several actions share: scene sizes, distances, and checks.
 
-Layer: shelving, shared helpers. Computes only; never moves anything. Each action file in
-shelving/actions/ keeps the helpers only it uses; what two or more of them need is here.
+Layer: shelving, shared helpers. Computes only; never moves anything. Each Behavior Tree
+node file in shelving/ keeps the helpers only it uses; what two or more need is here.
 """
 
 from __future__ import annotations

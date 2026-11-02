@@ -17,7 +17,7 @@ from __future__ import annotations
 import numpy as np
 
 from behavioros.core.actions import action
-from shelving.actions.base import FAILURE, RUNNING, SUCCESS, SimAction
+from shelving.action_base import FAILURE, RUNNING, SUCCESS, SimAction
 from shelving.common import clear_of_furniture
 from shelving.motion import BaseMove, ToolLine
 from shelving.teleop import BASE_STEP, HELP, STEP_COARSE, STEP_FINE, TURN_STEP

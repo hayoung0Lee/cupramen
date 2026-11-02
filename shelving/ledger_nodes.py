@@ -19,7 +19,7 @@ import numpy as np
 
 from behavioros.core.actions import action
 from shelving import ledger
-from shelving.actions.base import FAILURE, SUCCESS, SimAction
+from shelving.action_base import FAILURE, SUCCESS, SimAction
 
 
 def print_ledger(bb):

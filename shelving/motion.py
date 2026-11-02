@@ -2,7 +2,7 @@
 
 Layer: shelving, robot capability (knows no cups or shelves) — how to move over time.
 Each step() writes motor commands (ctrl) for one tick; physics then moves the robot.
-Doesn't decide what to do or when (shelving/actions/ does).
+Doesn't decide what to do or when (the nodes in shelving/ do).
 
 Each primitive is advanced by calling step(world) once per control tick and returns True when
 finished. Nothing here loops over mj_step: the caller owns the simulation loop. This is the

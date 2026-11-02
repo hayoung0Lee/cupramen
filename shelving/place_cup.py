@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from behavioros.core.actions import action
-from shelving.actions.base import SUCCESS, Do, Guarded, SimAction, holding
+from shelving.action_base import SUCCESS, Do, Guarded, SimAction, holding
 from shelving.common import CARRY_TIP, HOVER, base_frame_point, solve_down
 from shelving.motion import BaseMove, ToolLine, Wait
 
