@@ -4,7 +4,7 @@ Layer: shelving — the Behavior Tree nodes: decide what to do, in which order, 
 it worked (SUCCESS / FAILURE with a reason). They don't compute geometry or drive motors
 themselves; they use the layers below:
   plan     shelving/skills.py   where to stand, which arm poses
-  move     sim/motion.py        BaseMove, ToolLine, ... advanced a little each tick
+  move     shelving/motion.py   BaseMove, ToolLine, ... advanced a little each tick
   act      sim/world.py         instant buttons: suction_on / suction_off, queries
   observe  shelving/ledger.py   which cups are where
 e.g. pick_cup: plan arm poses (skills) -> lower the arm (motion) -> world.suction_on() ->
@@ -18,8 +18,8 @@ Every action follows the same pattern:
 
 Shared objects come from the blackboard (put there by scripts/run_bt.py):
   world    sim.world.World      the MuJoCo scene and robot
-  ik       sim.kinematics.ArmIK
-  planner  sim.nav.GridPlanner  occupancy grid for this episode's layout
+  ik       shelving.kinematics.ArmIK
+  planner  shelving.nav.GridPlanner  occupancy grid for this episode's layout
 """
 
 from __future__ import annotations
@@ -34,8 +34,8 @@ from shelving.skills import (
     BACKOFF, CARRY_TIP, HOVER, LIFT, PRESS, READY_REACH, backed_off, base_frame_point,
     carry_pose, clear_of_furniture, plan_box_approach, plan_shelf_approach, route, solve_down,
 )
-from sim.motion import BaseMove, JointMove, Lazy, ToolLine, Wait
-from sim.placement import BOX_STAND_HALF, BasePose, _rot
+from shelving.motion import BaseMove, JointMove, Lazy, ToolLine, Wait
+from shelving.placement import BOX_STAND_HALF, BasePose, _rot
 from sim.world import PREFIX
 
 RUNNING = py_trees.common.Status.RUNNING
@@ -85,7 +85,7 @@ def holding(cup):
 class SimAction(BaseAction):
     """Common helpers for actions that run stages in the simulation.
 
-    self.stages: list of motion primitives (sim/motion.py), Check, Do or Guarded.
+    self.stages: list of motion primitives (shelving/motion.py), Check, Do or Guarded.
     run_stages(): call once per tick from execute().
     """
 

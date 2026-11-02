@@ -9,9 +9,9 @@
     mjpython scripts/run_bt.py trees/b6_takeover.json --seed 0
              (stage 2: press t in this terminal to take over at the shelf, ? for keys)
 
-Loop (same role as the Webots controller's execution_loop, in one process):
-  every 2 ms   mj_step          physics
-  every 20 ms  tree.tick()      BehaviorOS: runtime resolution hook, then py_trees tick
+Loop (same role as the Webots controller's execution_loop, in one process), every 20 ms:
+  tick_tree()     the running node does one slice of its work (while the tree runs)
+  run_physics()   mj_step x 10, 2 ms each (always)
 The tree is printed whenever any node changes status, so you can follow where it is.
 """
 
@@ -34,15 +34,15 @@ import shelving.actions  # noqa: E402,F401  (registers the actions)
 from shelving.faults import FaultInjector  # noqa: E402
 from shelving.teleop import NoOperator, Operator, ScriptedOperator, start_terminal_keys  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
-from sim.kinematics import ArmIK  # noqa: E402
-from sim.nav import GridPlanner  # noqa: E402
+from shelving.kinematics import ArmIK  # noqa: E402
+from shelving.nav import GridPlanner  # noqa: E402
 from sim.world import World, r, randomize  # noqa: E402
 
 KEYS_LEFT = "type in the TERMINAL\nw / s\na / d\nr / f\nW S A D R F\ni k j l / u o\ng / space\nh"
 KEYS_RIGHT = ("\ntool forward / back 1 cm\ntool left / right 1 cm\ntool up / down 1 cm\n"
               "same, 2 mm\nbase 5 cm / turn 5 deg\ngrip / release\nhand back to the robot")
-CONTROL_EVERY = 10      # physics steps per tick: 10 x 2 ms = 20 ms
-TIME_LIMIT_S = 600.0    # simulation seconds before giving up
+PHYSICS_STEPS_PER_TICK = 10   # physics 2 ms x 10 = one tree tick every 20 ms
+TIME_LIMIT_S = 600.0          # simulation seconds before giving up (headless)
 
 
 def tree_snapshot(root):
@@ -135,39 +135,48 @@ def main():
         .build()
     )
     faults = FaultInjector(args.inject, world, args.seed)
-    log = randomize.MobilityLog(m, r("base_link"), info)
+    mobility = randomize.MobilityLog(m, r("base_link"), info)   # provided: path length, time
     print(f"seed {args.seed}: tree {args.tree.name}")
 
-    state = {"k": 0, "last": None, "leaf": None, "result": None}
     # With a person at the keyboard the full tree printouts would bury the teleop messages:
     # print one line per running action instead.
     full_tree = args.full_tree or mode != "keyboard"
+    root = tree.py_tree.root
+    shown = {"tree": None, "leaf": None}         # what show_progress printed last
 
-    def step():
-        """One physics step; tick the tree every CONTROL_EVERY steps."""
-        if state["result"] is None and state["k"] % CONTROL_EVERY == 0:
-            res = tree.tick()
-            faults.on_tick(running_leaf(tree.py_tree.root), blackboard)
-            if isinstance(operator, ScriptedOperator):
-                operator.tick()
-            snap = tree_snapshot(tree.py_tree.root)
-            if full_tree and snap != state["last"]:
+    def show_progress(res):
+        """Print the tree when any node changed status (or one line per new running action)."""
+        if full_tree:
+            snap = tree_snapshot(root)
+            if snap != shown["tree"]:
                 print(f"\n--- t={d.time:6.2f}s  tick {res.tick_count}: {res.status}")
-                print(py_trees.display.unicode_tree(tree.py_tree.root, show_status=True).rstrip())
-                state["last"] = snap
-            leaf = running_leaf(tree.py_tree.root)
-            if not full_tree and leaf is not None and leaf is not state["leaf"]:
+                print(py_trees.display.unicode_tree(root, show_status=True).rstrip())
+                shown["tree"] = snap
+        else:
+            leaf = running_leaf(root)
+            if leaf is not None and leaf is not shown["leaf"]:
                 print(f"  t={d.time:6.1f}s  {leaf.name}")
-                state["leaf"] = leaf
-            if res.status in ("SUCCESS", "FAILURE"):
-                state["result"] = res.status
-        mujoco.mj_step(m, d)
-        log.update(d)
-        state["k"] += 1
+                shown["leaf"] = leaf
+
+    def run_physics():
+        """20 ms of physics: 10 steps of 2 ms."""
+        for _ in range(PHYSICS_STEPS_PER_TICK):
+            mujoco.mj_step(m, d)
+            mobility.update(d)
+
+    def tick_tree() -> str:
+        """One tree tick: the running node does one slice of its work.
+        Returns the tree status: RUNNING, SUCCESS or FAILURE."""
+        res = tree.tick()
+        faults.on_tick(running_leaf(root), blackboard)     # (optional) injected faults
+        if isinstance(operator, ScriptedOperator):
+            operator.tick()                                # (optional) replayed keys
+        show_progress(res)
+        return res.status
 
     def report():
         result = tree.get_execution_result()
-        s = log.summary()
+        s = mobility.summary()
         placed = randomize.count_placed(m, d)["success_count"]   # the provided judge
         print(f"\nresult {result.status}: {result.total_ticks} ticks, "
               f"{result.duration:.1f} s sim time, base path {s['path_length_m']:.2f} m "
@@ -189,8 +198,10 @@ def main():
             print(f"  row written to {args.csv}")
 
     if args.headless:
-        while state["result"] is None and d.time < TIME_LIMIT_S:
-            step()
+        status = "RUNNING"
+        while status == "RUNNING" and d.time < TIME_LIMIT_S:
+            status = tick_tree()          # decide
+            run_physics()                 # the world moves 20 ms
         report()
         return
 
@@ -199,39 +210,47 @@ def main():
         viewer.cam.lookat[:] = [*info["box"]["pos"][:2], 0.6]
         viewer.cam.distance = 5.0
         viewer.cam.elevation = -35
-        reported = False
-        overview = (viewer.cam.lookat.copy(), viewer.cam.distance, viewer.cam.azimuth,
-                    viewer.cam.elevation)
-        last_mode = "auto"
-        while viewer.is_running():
-            t0 = time.time()
-            for _ in range(8):  # ~real time
-                step()
-            if state["result"] and not reported:
-                report()
-                reported = True
-            if operator.mode != last_mode:
-                if operator.mode == "human":
-                    # Close-up for the person: from behind and to the right of the robot,
-                    # looking down at the tool, so 2 mm steps are visible.
-                    overview = (viewer.cam.lookat.copy(), viewer.cam.distance,
-                                viewer.cam.azimuth, viewer.cam.elevation)
-                    viewer.cam.lookat[:] = world.tool_tip() - [0, 0, 0.08]
-                    viewer.cam.distance = 0.9
-                    viewer.cam.azimuth = float(np.degrees(world.base_pose()[2])) - 40
-                    viewer.cam.elevation = -25
-                elif last_mode == "human":
-                    (viewer.cam.lookat[:], viewer.cam.distance, viewer.cam.azimuth,
-                     viewer.cam.elevation) = overview
-                last_mode = operator.mode
-            title, detail = operator.overlay() if not state["result"] else ("DONE", state["result"])
+        camera = {"mode": "auto", "overview": None}
+
+        def follow_operator():
+            """Close-up while a person drives (from behind and to the right of the robot,
+            looking down at the tool, so 2 mm steps are visible); back to the overview after."""
+            if operator.mode == camera["mode"]:
+                return
+            if operator.mode == "human":
+                camera["overview"] = (viewer.cam.lookat.copy(), viewer.cam.distance,
+                                      viewer.cam.azimuth, viewer.cam.elevation)
+                viewer.cam.lookat[:] = world.tool_tip() - [0, 0, 0.08]
+                viewer.cam.distance = 0.9
+                viewer.cam.azimuth = float(np.degrees(world.base_pose()[2])) - 40
+                viewer.cam.elevation = -25
+            elif camera["mode"] == "human":
+                (viewer.cam.lookat[:], viewer.cam.distance, viewer.cam.azimuth,
+                 viewer.cam.elevation) = camera["overview"]
+            camera["mode"] = operator.mode
+
+        def show_texts(status):
+            """Top left: who is in control (or DONE). Bottom left: the keys, while a person drives."""
+            title, detail = operator.overlay() if status == "RUNNING" else ("DONE", status)
             texts = [(None, mujoco.mjtGridPos.mjGRID_TOPLEFT, title, detail)]
             if operator.mode == "human":
                 texts.append((mujoco.mjtFontScale.mjFONTSCALE_100, mujoco.mjtGridPos.mjGRID_BOTTOMLEFT,
                               KEYS_LEFT, KEYS_RIGHT))
             viewer.set_texts(texts)
+
+        tick_s = PHYSICS_STEPS_PER_TICK * m.opt.timestep    # 20 ms of simulated time
+        status = "RUNNING"
+        while viewer.is_running():
+            started = time.time()
+            if status == "RUNNING":       # decide, while the tree still runs
+                status = tick_tree()
+                if status != "RUNNING":
+                    report()
+            run_physics()                 # always: the world moves 20 ms (cups settle after the end)
+            follow_operator()
+            show_texts(status)
             viewer.sync()
-            time.sleep(max(0.0, 0.016 - (time.time() - t0)))
+            time.sleep(max(0.0, tick_s - (time.time() - started)))   # real time
 
 
 if __name__ == "__main__":

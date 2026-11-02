@@ -13,9 +13,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from sim.kinematics import ArmIK, IKResult, level_reach_seed
-from sim.nav import GridPlanner
-from sim.placement import BasePose, _rot, box_side_poses, shelf_front_pose
+from shelving.kinematics import ArmIK, IKResult, level_reach_seed
+from shelving.nav import GridPlanner
+from shelving.placement import BasePose, _rot, box_side_poses, shelf_front_pose
 from sim.world import PREFIX, World
 
 HOVER = 0.03         # tool above lid / cup bottom above shelf board while moving in

@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import numpy as np  # noqa: E402
 
-from sim.kinematics import ArmIK, level_reach_seed  # noqa: E402
-from sim.placement import SHELF_GAPS, box_side_poses, shelf_front_pose  # noqa: E402
+from shelving.kinematics import ArmIK, level_reach_seed  # noqa: E402
+from shelving.placement import SHELF_GAPS, box_side_poses, shelf_front_pose  # noqa: E402
 from sim.world import STOW, World  # noqa: E402
 
 CUP_HEIGHT = 0.11

@@ -4,7 +4,7 @@
     python   scripts/demo_pick_place.py --seed 0 --headless         # run fast, print only
     python   scripts/demo_pick_place.py --seed 0 --cup 2 --slot 5 --headless
 
-Scripted sequence of incremental motion primitives (sim/motion.py); no Behavior Tree yet and
+Scripted sequence of incremental motion primitives (shelving/motion.py); no Behavior Tree yet and
 no failure handling. IK targets are planned once at the start from the known layout.
 """
 
@@ -18,9 +18,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 
-from sim.kinematics import ArmIK  # noqa: E402
-from sim.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
-from sim.nav import GridPlanner  # noqa: E402
+from shelving.kinematics import ArmIK  # noqa: E402
+from shelving.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
+from shelving.nav import GridPlanner  # noqa: E402
 from sim.world import STOW, World, r, randomize  # noqa: E402
 from shelving.skills import (  # noqa: E402
     HOVER, carry_pose, plan_box_approach, plan_shelf_approach, route,

@@ -4,7 +4,7 @@ Layer: sim — the scene and the robot's body, like a remote control with a stat
   does    build the scene, reset it for a seed, answer "where is ...?", and make *instant*
           changes: teleport (for setup and checks), suction on / off
   doesn't decide what to do or when (shelving/actions.py), and doesn't move the robot over
-          time (sim/motion.py writes motor commands; physics moves the robot)
+          time (shelving/motion.py writes motor commands; physics moves the robot)
 
 The provided assets are never modified; the robot is attached at load time with MjSpec.
 Asset location comes from $CUPRAMEN_ASSETS (default: guide/cupramen_sim_assets).

@@ -22,8 +22,8 @@ import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 import mujoco.viewer  # noqa: E402
 
-from sim.kinematics import ArmIK, level_reach_seed  # noqa: E402
-from sim.placement import box_side_poses, shelf_front_pose  # noqa: E402
+from shelving.kinematics import ArmIK, level_reach_seed  # noqa: E402
+from shelving.placement import box_side_poses, shelf_front_pose  # noqa: E402
 from sim.world import POSITION_ACTUATOR, World, r  # noqa: E402
 
 HOVER = 0.03

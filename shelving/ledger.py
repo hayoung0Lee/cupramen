@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from sim.placement import BOX_INTERIOR_HALF, _rot
+from shelving.placement import BOX_INTERIOR_HALF, _rot
 from sim.world import World
 
 MAX_ATTEMPTS = 3         # recoveries for one cup before it is skipped

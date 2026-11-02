@@ -1,6 +1,7 @@
 """Where to park the base so the arm can work on a box cup or a shelf slot.
 
-Layer: sim — geometry only. Computes candidate base poses; never moves anything.
+Layer: shelving, task geometry (box and shelf sizes) — computes candidate base poses only;
+never moves anything.
 
 The arm is mounted at the front of the base, so the base stops facing the target with its
 front edge a small gap away from the box stand / shelf, laterally aligned with the target.

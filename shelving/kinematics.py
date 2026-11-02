@@ -1,7 +1,7 @@
 """Inverse kinematics for the youBot-lift arm (lift + arm1..arm4), tool pointing down.
 
-Layer: sim — arm math. Computes joint angles and collision checks on a copy of the state;
-never moves the robot.
+Layer: shelving, robot capability (knows no cups or shelves) — arm math. Computes joint
+angles and collision checks on a copy of the state; never moves the robot.
 
 Damped least squares on the tool_tip site Jacobian, solved on a scratch MjData so the
 running simulation is untouched. arm5 (tool roll) does not affect a downward suction tool
