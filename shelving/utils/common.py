@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from shelving.kinematics import ArmIK, IKResult, level_reach_seed
+from shelving.utils.kinematics import ArmIK, IKResult, level_reach_seed
 from sim.world import PREFIX, World
 
 if TYPE_CHECKING:
-    from shelving.nav import GridPlanner
+    from shelving.utils.nav import GridPlanner
 
 # ---- scene sizes (from the provided scene files) --------------------------------------
 BASE_HALF_LENGTH = 0.29           # chassis half size along robot x (youbot_lift.xml)

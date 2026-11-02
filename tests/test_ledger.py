@@ -16,7 +16,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from shelving import ledger  # noqa: E402
+from shelving.utils import ledger  # noqa: E402
 from sim.world import World  # noqa: E402
 
 

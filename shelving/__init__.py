@@ -12,14 +12,8 @@ only it uses:
     takeover.py      stage 2: check_place_ready, operator_available, request_takeover,
                      human_control, back_away
 
-What they use:
-    common.py        what several nodes share: scene sizes, distances, collision checks
-    kinematics.py    arm math (IK, "would this pose touch anything?")
-    nav.py           paths for the base (A*)
-    motion.py        moves over time: BaseMove, ToolLine, JointMove, Wait
-    ledger.py        which cups are where, read from the scene
-    teleop.py        stage 2: the operator and the keyboard
-    faults.py        fault injection for the recovery demos (--inject)
+What they use: shelving/utils/ (common, kinematics, nav, motion, ledger, teleop, faults;
+see its __init__.py).
 
 The nodes decide what to do, in which order, and check that it worked (SUCCESS / FAILURE
 with a reason); they don't compute geometry or drive motors themselves. E.g. pick_cup:

@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from shelving.teleop import NoOperator, Operator, ScriptedOperator  # noqa: E402
+from shelving.utils.teleop import NoOperator, Operator, ScriptedOperator  # noqa: E402
 
 
 def test_robot_asks_then_person_takes_over_and_hands_back():

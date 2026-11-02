@@ -5,7 +5,7 @@ from __future__ import annotations
 from behavioros.core.actions import action
 from shelving.action_base import SUCCESS, Do
 from shelving.ledger_nodes import LedgerAction
-from shelving.motion import BaseMove
+from shelving.utils.motion import BaseMove
 
 
 @action(

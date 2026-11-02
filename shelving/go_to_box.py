@@ -12,13 +12,13 @@ import numpy as np
 
 from behavioros.core.actions import action
 from shelving.action_base import SimAction
-from shelving.common import (
+from shelving.utils.common import (
     BASE_HALF_LENGTH, BOX_INTERIOR_HALF, BOX_STAND_HALF, GAP, HOVER, LIFT, PRESS, BasePose, Pose,
     avoid_floor_cups, backed_off, creep_clear, floor_cups, rot2d, route, solve_down, to_world,
 )
-from shelving.kinematics import ArmIK, IKResult
-from shelving.motion import BaseMove
-from shelving.nav import GridPlanner
+from shelving.utils.kinematics import ArmIK, IKResult
+from shelving.utils.motion import BaseMove
+from shelving.utils.nav import GridPlanner
 from sim.world import World
 
 REACH_MARGIN = 0.03  # a box side "has reach to spare" if the arm reaches 3 cm farther too

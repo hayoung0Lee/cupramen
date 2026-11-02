@@ -1,4 +1,4 @@
-"""Stage 2: a person finishes the placement by keyboard (operator: shelving/teleop.py).
+"""Stage 2: a person finishes the placement by keyboard (operator: shelving/utils/teleop.py).
 
     Place on the slot (selector)
     ├─ Robot places:  check_place_ready → place_cup → verify_placed
@@ -18,9 +18,9 @@ import numpy as np
 
 from behavioros.core.actions import action
 from shelving.action_base import FAILURE, RUNNING, SUCCESS, SimAction
-from shelving.common import clear_of_furniture
-from shelving.motion import BaseMove, ToolLine
-from shelving.teleop import BASE_STEP, HELP, STEP_COARSE, STEP_FINE, TURN_STEP
+from shelving.utils.common import clear_of_furniture
+from shelving.utils.motion import BaseMove, ToolLine
+from shelving.utils.teleop import BASE_STEP, HELP, STEP_COARSE, STEP_FINE, TURN_STEP
 
 
 def describe(failure) -> str:

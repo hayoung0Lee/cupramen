@@ -1,7 +1,7 @@
 """Ledger nodes: start it, choose the next cup and slot, check the hand, record a placement.
 
 The ledger lives on the blackboard:
-  cups           {cup name: state}, states in shelving/ledger.py
+  cups           {cup name: state}, states in shelving/utils/ledger.py
   slots          {slot number: cup name or None}
   attempts       {cup name: recoveries spent on it}
   blocked_slots  slots the robot could not get to (e.g. a dropped cup in front of them)
@@ -18,7 +18,7 @@ from __future__ import annotations
 import numpy as np
 
 from behavioros.core.actions import action
-from shelving import ledger
+from shelving.utils import ledger
 from shelving.action_base import FAILURE, SUCCESS, SimAction
 
 

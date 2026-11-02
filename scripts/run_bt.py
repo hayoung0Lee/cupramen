@@ -3,7 +3,7 @@
     mjpython scripts/run_bt.py trees/b2_go_to_box.json --seed 0          # watch in the viewer
     python   scripts/run_bt.py trees/b2_go_to_box.json --seed 0 --headless
     python   scripts/run_bt.py trees/b5_recovery.json --seed 0 --headless --inject seal:0.3
-             (faults: shelving/faults.py)
+             (faults: shelving/utils/faults.py)
     python   scripts/run_bt.py trees/b5_recovery.json --seed 0 --headless --csv results/results.csv
              (writes this seed's row in the results_template.csv format; other rows kept)
     mjpython scripts/run_bt.py trees/b6_takeover.json --seed 0
@@ -31,11 +31,11 @@ import numpy as np  # noqa: E402
 import py_trees  # noqa: E402
 
 import shelving  # noqa: E402,F401  (registers the Behavior Tree nodes)
-from shelving.faults import FaultInjector  # noqa: E402
-from shelving.teleop import NoOperator, Operator, ScriptedOperator, start_terminal_keys  # noqa: E402
+from shelving.utils.faults import FaultInjector  # noqa: E402
+from shelving.utils.teleop import NoOperator, Operator, ScriptedOperator, start_terminal_keys  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
-from shelving.kinematics import ArmIK  # noqa: E402
-from shelving.nav import GridPlanner  # noqa: E402
+from shelving.utils.kinematics import ArmIK  # noqa: E402
+from shelving.utils.nav import GridPlanner  # noqa: E402
 from sim.world import World, r, randomize  # noqa: E402
 
 KEYS_LEFT = "type in the TERMINAL\nw / s\na / d\nr / f\nW S A D R F\ni k j l / u o\ng / space\nh"
@@ -106,13 +106,13 @@ def main():
     ap.add_argument("tree", type=Path, help="JSON tree file")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--headless", action="store_true")
-    ap.add_argument("--inject", default="", help="faults, e.g. seal-fail:1,drop-carry:4 (shelving/faults.py)")
+    ap.add_argument("--inject", default="", help="faults, e.g. seal-fail:1,drop-carry:4 (shelving/utils/faults.py)")
     ap.add_argument("--csv", type=Path, help="write this run's row to a results CSV")
     ap.add_argument("--full-tree", action="store_true",
                     help="print the whole tree on every change (default unless a person drives)")
     ap.add_argument("--operator", default=None,
                     help="keyboard (default with the viewer), none (default headless), "
-                         "or script:KEYS e.g. script:t,s,f,space,h (shelving/teleop.py)")
+                         "or script:KEYS e.g. script:t,s,f,space,h (shelving/utils/teleop.py)")
     args = ap.parse_args()
 
     world = World.create()

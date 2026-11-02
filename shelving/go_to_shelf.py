@@ -12,14 +12,14 @@ import numpy as np
 
 from behavioros.core.actions import action
 from shelving.action_base import Guarded, SimAction, holding
-from shelving.common import (
+from shelving.utils.common import (
     BACKOFF, BASE_HALF_LENGTH, CARRY_TIP, GAP, HOVER, READY_REACH, SHELF_HALF_DEPTH, SWEEP_MARGIN,
     BasePose, Pose, avoid_floor_cups, backed_off, base_frame_point, clear_of_furniture,
     creep_clear, floor_cups, rot2d, route, solve_down, to_world,
 )
-from shelving.kinematics import ArmIK, IKResult
-from shelving.motion import BaseMove, ToolLine
-from shelving.nav import GridPlanner
+from shelving.utils.kinematics import ArmIK, IKResult
+from shelving.utils.motion import BaseMove, ToolLine
+from shelving.utils.nav import GridPlanner
 from sim.world import World
 
 # Standoffs to try in front of the shelf (scripts/check_reach.py). Close in, the long arm has

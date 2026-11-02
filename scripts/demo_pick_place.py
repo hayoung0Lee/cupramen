@@ -4,7 +4,7 @@
     python   scripts/demo_pick_place.py --seed 0 --headless         # run fast, print only
     python   scripts/demo_pick_place.py --seed 0 --cup 2 --slot 5 --headless
 
-Scripted sequence of incremental motion primitives (shelving/motion.py); no Behavior Tree yet and
+Scripted sequence of incremental motion primitives (shelving/utils/motion.py); no Behavior Tree yet and
 no failure handling. IK targets are planned once at the start from the known layout.
 """
 
@@ -18,14 +18,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 
-from shelving.kinematics import ArmIK  # noqa: E402
-from shelving.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
-from shelving.nav import GridPlanner  # noqa: E402
+from shelving.utils.kinematics import ArmIK  # noqa: E402
+from shelving.utils.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
+from shelving.utils.nav import GridPlanner  # noqa: E402
 from sim.world import STOW, World, r, randomize  # noqa: E402
 from shelving.go_to_box import plan_box_approach  # noqa: E402
 from shelving.go_to_shelf import plan_shelf_approach  # noqa: E402
 from shelving.pick_cup import carry_pose  # noqa: E402
-from shelving.common import HOVER, route  # noqa: E402
+from shelving.utils.common import HOVER, route  # noqa: E402
 
 CONTROL_EVERY = 10   # physics steps per control tick (20 ms)
 

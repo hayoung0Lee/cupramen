@@ -15,7 +15,7 @@ import math
 
 import numpy as np
 
-from shelving.common import BOX_STAND_HALF, SHELF_HALF_DEPTH, SHELF_HALF_WIDTH
+from shelving.utils.common import BOX_STAND_HALF, SHELF_HALF_DEPTH, SHELF_HALF_WIDTH
 
 RES = 0.05            # m per cell
 ARENA = (-3.3, 3.3)   # m, square; layouts are sampled in (-3, 3)

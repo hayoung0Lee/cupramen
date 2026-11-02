@@ -1,7 +1,7 @@
 """The frame every shelving action is built on.
 
 An action runs a list of *stages* one after another, a little each tick:
-  motion primitives (shelving/motion.py)  BaseMove, ToolLine, JointMove, Wait: take time
+  motion primitives (shelving/utils/motion.py)  BaseMove, ToolLine, JointMove, Wait: take time
   Check(fn)                               look at the world; fail with a reason if wrong
   Do(fn)                                  change something at once (e.g. suction off)
   Guarded(motion, guard)                  a motion that stops the moment guard() complains
@@ -16,11 +16,11 @@ import numpy as np
 import py_trees
 
 from behavioros.core.actions import BaseAction
-from shelving.common import (
+from shelving.utils.common import (
     BACKOFF, BOX_STAND_HALF, CARRY_TIP, READY_REACH, BasePose, backed_off, base_frame_point, rot2d,
 )
-from shelving.motion import BaseMove, Lazy, ToolLine
-from shelving.teleop import NoOperator
+from shelving.utils.motion import BaseMove, Lazy, ToolLine
+from shelving.utils.teleop import NoOperator
 from sim.world import PREFIX
 
 RUNNING = py_trees.common.Status.RUNNING
@@ -69,9 +69,9 @@ class SimAction(BaseAction):
 
     Shared objects come from the blackboard (put there by scripts/run_bt.py):
       world     sim.world.World               the MuJoCo scene and robot
-      ik        shelving.kinematics.ArmIK
-      planner   shelving.nav.GridPlanner      occupancy grid for this episode's layout
-      operator  shelving.teleop.Operator      stage 2 (nobody if absent)
+      ik        shelving.utils.kinematics.ArmIK
+      planner   shelving.utils.nav.GridPlanner      occupancy grid for this episode's layout
+      operator  shelving.utils.teleop.Operator      stage 2 (nobody if absent)
     """
 
     timeout_s = 60.0
@@ -91,7 +91,7 @@ class SimAction(BaseAction):
 
     @property
     def operator(self):
-        """The stage-2 operator (shelving/teleop.py); nobody if the runner set none."""
+        """The stage-2 operator (shelving/utils/teleop.py); nobody if the runner set none."""
         return self.read_blackboard("operator") or NO_OPERATOR
 
     def reset(self):
