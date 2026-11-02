@@ -1,5 +1,7 @@
 """2D grid path planning for the base: A* over an occupancy grid of the arena.
 
+Layer: sim — path math. Computes waypoints; never moves the robot (BaseMove drives them).
+
 Obstacles are the box stand and the shelf footprints (oriented rectangles), inflated by the
 robot's footprint radius, so the base centre can be treated as a point. The robot drives with
 the arm tucked, which keeps that radius small.

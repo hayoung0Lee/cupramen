@@ -1,5 +1,8 @@
 """Planning helpers shared by the BT actions and the scripted demo.
 
+Layer: shelving — task planning. Combines the sim calculations (placement, nav, kinematics)
+for one cup or one slot. Computes only: doesn't move anything or decide the order of work.
+
 They answer "where should the base stand and which joint poses will the arm need" for one
 cup or one slot, using the current simulation state. They do not move anything.
 """

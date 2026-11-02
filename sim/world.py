@@ -1,4 +1,10 @@
-"""Scene assembly: provided cup-ramen scene + youBot-lift robot, and episode reset.
+"""The simulated world: the provided cup-ramen scene with the youBot-lift robot attached.
+
+Layer: sim — the scene and the robot's body, like a remote control with a status screen.
+  does    build the scene, reset it for a seed, answer "where is ...?", and make *instant*
+          changes: teleport (for setup and checks), suction on / off
+  doesn't decide what to do or when (shelving/actions.py), and doesn't move the robot over
+          time (sim/motion.py writes motor commands; physics moves the robot)
 
 The provided assets are never modified; the robot is attached at load time with MjSpec.
 Asset location comes from $CUPRAMEN_ASSETS (default: guide/cupramen_sim_assets).
@@ -36,10 +42,9 @@ def r(name: str) -> str:
     return PREFIX + name
 
 
-# Vacuum-seal check when suction is switched on: the pad must sit on the lid, roughly
-# centred and square, or the seal fails (the cup is not held).
-SEAL_MAX_OFFSET = 0.025   # m, pad centre to lid centre
-SEAL_MAX_TILT = 8.0       # deg, cup axis vs tool axis
+# Suction seal. Switching suction on holds a cup only if the pad sits on its lid:
+SEAL_MAX_OFFSET = 0.025   # m:   pad centre at most 2.5 cm (sideways) from the lid centre
+SEAL_MAX_TILT = 8.0       # deg: cup axis at most 8 deg off the tool axis
 
 
 def build_model() -> mujoco.MjModel:
@@ -103,24 +108,39 @@ class World:
 
     # ---- suction ---------------------------------------------------------
     def suction_on(self) -> str | None:
-        """Try to seal on the cup the pad is touching. Returns the held cup, or None if no seal."""
-        m, d = self.m, self.d
-        pad_geom = m.geom(r("pad")).id
-        touching = set()
-        for c in d.contact[: d.ncon]:
-            if pad_geom in (c.geom1, c.geom2):
-                other = m.body(m.geom_bodyid[c.geom2 if c.geom1 == pad_geom else c.geom1]).name
-                if other in randomize.CUP_BODIES:
-                    touching.add(other)
-        tool_axis = d.site(r("tool_tip")).xmat.reshape(3, 3)[:, 2]
-        for cup in touching:
-            offset = np.linalg.norm((self.tool_tip() - self.cup_top(cup))[:2])
-            cup_axis = d.body(cup).xmat.reshape(3, 3)[:, 2]
-            tilt = np.degrees(np.arccos(np.clip(-tool_axis @ cup_axis, -1.0, 1.0)))
-            if offset <= SEAL_MAX_OFFSET and tilt <= SEAL_MAX_TILT:
+        """Switch suction on. A cup is held only if all three are true:
+          1. the pad touches the cup
+          2. seal_offset(cup) <= SEAL_MAX_OFFSET (2.5 cm)
+          3. seal_tilt(cup)   <= SEAL_MAX_TILT   (8 deg)
+        Then the pad and the cup are welded together (see _weld).
+        Returns the held cup, or None if no cup sealed."""
+        for cup in self.cups_touching_pad():
+            if self.seal_offset(cup) <= SEAL_MAX_OFFSET and self.seal_tilt(cup) <= SEAL_MAX_TILT:
                 self._weld(cup)
                 return cup
         return None
+
+    def cups_touching_pad(self) -> list[str]:
+        """Cups in contact with the suction pad right now."""
+        m, d = self.m, self.d
+        pad = m.geom(r("pad")).id
+        cups = []
+        for c in d.contact[: d.ncon]:
+            if pad in (c.geom1, c.geom2):
+                other = m.body(m.geom_bodyid[c.geom2 if c.geom1 == pad else c.geom1]).name
+                if other in randomize.CUP_BODIES and other not in cups:
+                    cups.append(other)
+        return cups
+
+    def seal_offset(self, cup: str) -> float:
+        """Sideways distance (m) from the pad centre to the cup's lid centre."""
+        return float(np.linalg.norm((self.tool_tip() - self.cup_top(cup))[:2]))
+
+    def seal_tilt(self, cup: str) -> float:
+        """Angle (deg) between the cup's axis and the tool axis (0 = pad flat on the lid)."""
+        tool_down = self.d.site(r("tool_tip")).xmat.reshape(3, 3)[:, 2]
+        cup_up = self.d.body(cup).xmat.reshape(3, 3)[:, 2]
+        return float(np.degrees(np.arccos(np.clip(-tool_down @ cup_up, -1.0, 1.0))))
 
     def suction_off(self) -> None:
         for cup in randomize.CUP_BODIES:
@@ -133,7 +153,10 @@ class World:
         return None
 
     def _weld(self, cup: str) -> None:
-        """Activate the cup's weld at the cup's current pose relative to the pad."""
+        """Glue the cup to the pad as it sits now. MuJoCo has no vacuum; a weld is an invisible
+        rigid link between two bodies that can be switched on and off. One per cup is made
+        (inactive) in build_model; this records where the cup sits relative to the pad, so
+        an off-centre cup stays off-centre instead of jumping to the pad centre."""
         m, d = self.m, self.d
         pad, body = m.body(r("suction_pad")).id, m.body(cup).id
         inv = np.zeros(4)

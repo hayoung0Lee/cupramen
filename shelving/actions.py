@@ -1,5 +1,15 @@
 """BehaviorOS actions for the cup-shelving task.
 
+Layer: shelving — the Behavior Tree nodes: decide what to do, in which order, and check that
+it worked (SUCCESS / FAILURE with a reason). They don't compute geometry or drive motors
+themselves; they use the layers below:
+  plan     shelving/skills.py   where to stand, which arm poses
+  move     sim/motion.py        BaseMove, ToolLine, ... advanced a little each tick
+  act      sim/world.py         instant buttons: suction_on / suction_off, queries
+  observe  shelving/ledger.py   which cups are where
+e.g. pick_cup: plan arm poses (skills) -> lower the arm (motion) -> world.suction_on() ->
+check it returned this cup, else fail("seal_failed") -> lift (motion) -> check still held.
+
 Every action follows the same pattern:
   reset()    per-run state; called by BehaviorOS each time the node starts (again)
   execute()  called every tick (20 ms); on the first tick it plans from the *current*

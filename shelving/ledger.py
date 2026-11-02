@@ -1,5 +1,7 @@
 """The task ledger, rebuilt from what the simulation actually shows.
 
+Layer: shelving — task state. Reads the scene only.
+
 After a failure the robot cannot trust what it *planned*: a dropped cup may have fallen
 back into the box or onto the floor, a released cup may stand off its slot. So instead of
 editing the ledger step by step, look at every cup and classify it:
