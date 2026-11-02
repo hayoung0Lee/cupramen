@@ -19,13 +19,30 @@ import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 
 from shelving.utils.ik import ArmIK  # noqa: E402
-from shelving.utils.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
+from shelving.utils.motion import BaseMove, JointMove, Lazy, Wait  # noqa: E402
 from shelving.utils.planner import GridPlanner  # noqa: E402
 from sim.world import STOW, World, r, randomize  # noqa: E402
 from shelving.go_to_box import plan_box_approach  # noqa: E402
 from shelving.go_to_shelf import plan_shelf_approach  # noqa: E402
 from shelving.pick_cup import carry_pose  # noqa: E402
 from shelving.utils.common import HOVER, route  # noqa: E402
+
+
+class Suction:  # this demo only (the Behavior Tree nodes use Check / Do stages)
+    """Switch suction on (succeeds only if a seal forms) or off."""
+
+    def __init__(self, on: bool):
+        self.on = on
+        self.held: str | None = None
+
+    def step(self, world: World) -> bool:
+        if self.on:
+            self.held = world.suction_on()
+            print(f"    suction: {'sealed on ' + self.held if self.held else 'NO SEAL'}")
+        else:
+            world.suction_off()
+        return True
+
 
 CONTROL_EVERY = 10   # physics steps per control tick (20 ms)
 

@@ -6,7 +6,7 @@ Doesn't decide what to do or when (the nodes in shelving/ do).
 
 Each primitive is advanced by calling step(world) once per control tick and returns True when
 finished. Nothing here loops over mj_step: the caller owns the simulation loop. This is the
-shape a Behavior Tree action needs (RUNNING until done), so these map 1:1 onto BT leaves later.
+shape a Behavior Tree action needs (RUNNING until done): the nodes run them as stages.
 """
 
 from __future__ import annotations
@@ -115,55 +115,6 @@ class Wait:
         if self.t0 is None:
             self.t0 = world.d.time
         return world.d.time - self.t0 >= self.seconds
-
-
-class Do:
-    """Run a function once (e.g. switch suction) and finish immediately."""
-
-    def __init__(self, fn):
-        self.fn = fn
-
-    def step(self, world: World) -> bool:
-        self.fn(world)
-        return True
-
-
-class Suction:
-    """Switch suction on (succeeds only if a seal forms) or off."""
-
-    def __init__(self, on: bool):
-        self.on = on
-        self.held: str | None = None
-
-    def step(self, world: World) -> bool:
-        if self.on:
-            self.held = world.suction_on()
-            print(f"    suction: {'sealed on ' + self.held if self.held else 'NO SEAL'}")
-        else:
-            world.suction_off()
-        return True
-
-
-def detour(start, goal, obstacles, margin: float = 0.15):
-    """Waypoints from start to goal (x, y) that skirt circular obstacles [(center, radius)].
-
-    Stand-in until a grid planner exists: one tangent-side waypoint per blocking obstacle.
-    """
-    start, goal = np.asarray(start, float), np.asarray(goal, float)
-    seg = goal - start
-    L2 = float(seg @ seg)
-    for i, (c, rad) in enumerate(obstacles):
-        c = np.asarray(c, float)
-        t = float(np.clip((c - start) @ seg / L2, 0.0, 1.0)) if L2 > 0 else 0.0
-        closest = start + t * seg
-        off = closest - c
-        if 0.0 < t < 1.0 and np.linalg.norm(off) < rad:
-            if np.linalg.norm(off) < 1e-6:
-                off = np.array([-seg[1], seg[0]])
-            via = c + (rad + margin) * off / np.linalg.norm(off)
-            rest = obstacles[:i] + obstacles[i + 1:]
-            return detour(start, via, rest, margin)[:-1] + detour(via, goal, rest, margin)
-    return [tuple(start), tuple(goal)]
 
 
 class Lazy:
