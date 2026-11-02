@@ -5,5 +5,4 @@
     nav.py         paths for the base (A*)
     motion.py      moves over time: BaseMove, ToolLine, JointMove, Wait
     teleop.py      stage 2: the operator and the keyboard
-    faults.py      fault injection for the recovery demos (--inject)
 """

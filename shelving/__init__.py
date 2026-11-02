@@ -13,7 +13,7 @@ only it uses:
     takeover.py      stage 2: check_place_ready, operator_available, request_takeover,
                      human_control, back_away
 
-What they use: shelving/utils/ (common, kinematics, nav, motion, teleop, faults;
+What they use: shelving/utils/ (common, kinematics, nav, motion, teleop;
 see its __init__.py).
 
 The nodes decide what to do, in which order, and check that it worked (SUCCESS / FAILURE

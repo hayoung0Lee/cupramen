@@ -25,7 +25,7 @@ import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 
 import shelving  # noqa: E402,F401  (registers the Behavior Tree nodes)
-from shelving.utils.faults import FaultInjector  # noqa: E402
+from scripts.faults import FaultInjector  # noqa: E402
 from shelving.utils.common import floor_cups  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
 from shelving.utils.kinematics import ArmIK  # noqa: E402
@@ -91,7 +91,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("tree", type=Path)
     ap.add_argument("--seeds", default="0")
-    ap.add_argument("--inject", default="", help="faults, see shelving/utils/faults.py")
+    ap.add_argument("--inject", default="", help="faults, see scripts/faults.py")
     args = ap.parse_args()
     tree_json = json.loads(args.tree.read_text())
     clean = [check(tree_json, int(s), args.inject) for s in args.seeds.split(",")]
