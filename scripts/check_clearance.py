@@ -26,7 +26,7 @@ import numpy as np  # noqa: E402
 
 import shelving.actions  # noqa: E402,F401
 from shelving.faults import FaultInjector  # noqa: E402
-from shelving.skills import floor_cups  # noqa: E402
+from shelving.common import floor_cups  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
 from shelving.kinematics import ArmIK  # noqa: E402
 from shelving.nav import GridPlanner  # noqa: E402

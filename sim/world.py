@@ -3,7 +3,7 @@
 Layer: sim — the scene and the robot's body, like a remote control with a status screen.
   does    build the scene, reset it for a seed, answer "where is ...?", and make *instant*
           changes: teleport (for setup and checks), suction on / off
-  doesn't decide what to do or when (shelving/actions.py), and doesn't move the robot over
+  doesn't decide what to do or when (shelving/actions/), and doesn't move the robot over
           time (shelving/motion.py writes motor commands; physics moves the robot)
 
 The provided assets are never modified; the robot is attached at load time with MjSpec.

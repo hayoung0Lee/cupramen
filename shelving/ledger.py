@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from shelving.placement import BOX_INTERIOR_HALF, _rot
+from shelving.common import BOX_INTERIOR_HALF, rot2d
 from sim.world import World
 
 MAX_ATTEMPTS = 3         # recoveries for one cup before it is skipped
@@ -35,7 +35,7 @@ def tilt_deg(world: World, cup: str) -> float:
 
 def in_box(world: World, cup: str) -> bool:
     box = world.info["box"]
-    local = _rot(box["yaw"]).T @ (world.d.body(cup).xpos[:2] - np.asarray(box["pos"][:2]))
+    local = rot2d(box["yaw"]).T @ (world.d.body(cup).xpos[:2] - np.asarray(box["pos"][:2]))
     return bool(abs(local[0]) <= BOX_INTERIOR_HALF[0] and abs(local[1]) <= BOX_INTERIOR_HALF[1])
 
 
