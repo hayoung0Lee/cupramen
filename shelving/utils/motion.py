@@ -25,8 +25,10 @@ def _wrap(a: float) -> float:
 class JointMove:
     """Move lift/arm joints to targets along a smooth (smoothstep) joint-space path."""
 
-    def __init__(self, target: dict[str, float], duration: float = 2.0, tol: float = 0.01):
+    def __init__(self, target: dict[str, float], duration: float = 2.0, tol: float = 0.01,
+                 settle: float = 1.0):
         self.target, self.duration, self.tol = target, duration, tol
+        self.settle = settle    # extra seconds to arrive before giving up (finished anyway)
         self.t0 = None
         self.q0: dict[str, float] = {}
 
