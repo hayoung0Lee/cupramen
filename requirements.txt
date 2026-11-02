@@ -1,0 +1,9 @@
+# Python 3.11. Install with:  python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+mujoco==3.17.0
+numpy
+pytest
+pytest-cov             # BehaviorOS's pytest settings use --cov
+-e ./BehaviorOS          # BehaviorOS (this repo's copy, with the changes listed in README.md)
+
+# Only for tools/convert_youbot_meshes.py (the converted meshes are already in the repo):
+# trimesh pycollada fast_simplification pillow
