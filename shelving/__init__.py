@@ -7,12 +7,13 @@ only it uses:
     pick_cup.py      pick_cup
     go_to_shelf.py   go_to_shelf    + choosing where to stand at the shelf
     place_cup.py     place_cup, verify_placed
-    ledger_nodes.py  init_episode, select_next_task, is_holding, mark_placed
+    ledger.py        the ledger (which cups are where) + init_episode, select_next_task,
+                     is_holding, mark_placed
     recover.py       recover
     takeover.py      stage 2: check_place_ready, operator_available, request_takeover,
                      human_control, back_away
 
-What they use: shelving/utils/ (common, kinematics, nav, motion, ledger, teleop, faults;
+What they use: shelving/utils/ (common, kinematics, nav, motion, teleop, faults;
 see its __init__.py).
 
 The nodes decide what to do, in which order, and check that it worked (SUCCESS / FAILURE
@@ -25,5 +26,5 @@ JSON tree can name them by "type".
 """
 
 from shelving import (  # noqa: F401
-    go_to_box, go_to_shelf, ledger_nodes, pick_cup, place_cup, recover, takeover,
+    go_to_box, go_to_shelf, ledger, pick_cup, place_cup, recover, takeover,
 )
