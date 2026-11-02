@@ -1,10 +1,10 @@
 """The frame every shelving action is built on.
 
 An action runs a list of *stages* one after another, a little each tick:
-  motion primitives (shelving/utils/motion.py)  BaseMove, ToolLine, JointMove, Wait: take time
-  Check(fn)                               look at the world; fail with a reason if wrong
-  Do(fn)                                  change something at once (e.g. suction off)
-  Guarded(motion, guard)                  a motion that stops the moment guard() complains
+  motions (shelving/utils/base_action.py, JointMove in pick_cup.py, Lazy here): take time
+  Check(fn)                look at the world; fail with a reason if wrong
+  Do(fn)                   change something at once (e.g. suction off)
+  Guarded(motion, guard)   a motion that stops the moment guard() complains
 
 SimAction (a BehaviorOS BaseAction) runs them: execute() plans on the first tick and fills
 self.stages, then calls run_stages() every tick, which returns RUNNING / SUCCESS / FAILURE.
@@ -19,7 +19,7 @@ from behavioros.core.actions import BaseAction
 from shelving.utils.common import (
     BACKOFF, BOX_STAND_HALF, CARRY_TIP, READY_REACH, BasePose, backed_off, base_frame_point, rot2d,
 )
-from shelving.utils.motion import BaseMove, Lazy, ToolLine
+from shelving.utils.base_action import BaseMove, ToolLine
 from shelving.utils.teleop import NoOperator
 from sim.world import PREFIX
 
@@ -27,6 +27,22 @@ RUNNING = py_trees.common.Status.RUNNING
 SUCCESS = py_trees.common.Status.SUCCESS
 FAILURE = py_trees.common.Status.FAILURE
 NO_OPERATOR = NoOperator()
+
+
+class Lazy:
+    """Build the real primitive on first step, from the state at that moment.
+
+    For motions whose target depends on what actually happened before (e.g. where the cup
+    ended up on the pad), as opposed to targets planned up front.
+    """
+
+    def __init__(self, factory):
+        self.factory, self.inner = factory, None
+
+    def step(self, world: World) -> bool:
+        if self.inner is None:
+            self.inner = self.factory(world)
+        return self.inner.step(world)
 
 
 class Check:

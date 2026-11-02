@@ -2,7 +2,7 @@
 
 Behavior Tree nodes (BehaviorOS actions), one file per node or pair, each with the helpers
 only it uses:
-    action_base.py   the frame every node is built on: SimAction, stages, safe_stages
+    sim_action.py    the frame every node is built on: SimAction, stages, safe_stages
     go_to_box.py     go_to_box      + choosing the box side
     pick_cup.py      pick_cup
     go_to_shelf.py   go_to_shelf    + choosing where to stand at the shelf
@@ -13,7 +13,7 @@ only it uses:
     takeover.py      stage 2: check_place_ready, operator_available, request_takeover,
                      human_control, back_away
 
-What they use: shelving/utils/ (common, ik, planner, motion, teleop;
+What they use: shelving/utils/ (common, ik, planner, base_action, teleop;
 see its __init__.py).
 
 The nodes decide what to do, in which order, and check that it worked (SUCCESS / FAILURE

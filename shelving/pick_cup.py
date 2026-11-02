@@ -3,11 +3,36 @@
 from __future__ import annotations
 
 from behavioros.core.actions import action
-from shelving.action_base import Check, Guarded, SimAction, holding
+from shelving.sim_action import Check, Guarded, SimAction, holding
 from shelving.utils.common import CARRY_TIP, HOVER, LIFT, PRESS, solve_down
 from shelving.utils.ik import ArmIK, IKResult
-from shelving.utils.motion import BaseMove, JointMove, Wait
-from sim.world import World
+from shelving.utils.base_action import BaseMove, Wait
+from sim.world import POSITION_ACTUATOR, World, r
+
+
+class JointMove:
+    """Move lift/arm joints to targets along a smooth (smoothstep) joint-space path."""
+
+    def __init__(self, target: dict[str, float], duration: float = 2.0, tol: float = 0.01,
+                 settle: float = 1.0):
+        self.target, self.duration, self.tol = target, duration, tol
+        self.settle = settle    # extra seconds to arrive before giving up (finished anyway)
+        self.t0 = None
+        self.q0: dict[str, float] = {}
+
+    def step(self, world: World) -> bool:
+        d = world.d
+        if self.t0 is None:
+            self.t0 = d.time
+            self.q0 = {j: float(d.actuator(r(POSITION_ACTUATOR[j])).ctrl[0]) for j in self.target}
+        s = min(1.0, (d.time - self.t0) / self.duration)
+        s = s * s * (3 - 2 * s)
+        for j, q1 in self.target.items():
+            d.actuator(r(POSITION_ACTUATOR[j])).ctrl = self.q0[j] + s * (q1 - self.q0[j])
+        if s < 1.0:
+            return False
+        err = max(abs(float(d.joint(r(j)).qpos[0]) - q1) for j, q1 in self.target.items())
+        return err < self.tol or d.time - self.t0 > self.duration + self.settle
 
 
 def carry_pose(world: World, ik: ArmIK) -> IKResult | None:

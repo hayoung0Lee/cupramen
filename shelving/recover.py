@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from behavioros.core.actions import action
-from shelving.action_base import SUCCESS, Do
+from shelving.sim_action import SUCCESS, Do
 from shelving.ledger import LedgerAction
-from shelving.utils.motion import BaseMove
+from shelving.utils.base_action import BaseMove
 
 
 @action(
@@ -20,7 +20,7 @@ class Recover(LedgerAction):
     """Runs as the fallback of "shelve one cup". Always SUCCESS, so the loop goes on and
     the next round re-plans from wherever the robot and the cups are now.
 
-    Makes the robot safe first (SimAction.safe_stages in action_base.py). A held cup stays
+    Makes the robot safe first (SimAction.safe_stages in sim_action.py). A held cup stays
     held: the next round sees it in the ledger and carries it on. If the slot could not be reached (no
     parking spot, blocked, timeout on the way), the slot goes on blocked_slots and the next
     round picks another one.

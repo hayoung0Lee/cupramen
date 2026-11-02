@@ -29,7 +29,7 @@ from __future__ import annotations
 import numpy as np
 
 from behavioros.core.actions import action
-from shelving.action_base import FAILURE, SUCCESS, SimAction
+from shelving.sim_action import FAILURE, SUCCESS, SimAction
 from shelving.utils.common import BOX_INTERIOR_HALF, rot2d
 from sim.world import World
 

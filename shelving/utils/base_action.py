@@ -1,12 +1,19 @@
-"""Incremental motion primitives.
+"""Base actions: the small moves several Behavior Tree actions share (drive, tool line, wait).
 
-Layer: shelving, robot capability (knows no cups or shelves) — how to move over time.
-Each step() writes motor commands (ctrl) for one tick; physics then moves the robot.
-Doesn't decide what to do or when (the nodes in shelving/ do).
+Purpose: an action can't finish "drive to the shelf" in one call; it has to move a little
+every tick (20 ms) and keep checking. These are the moves that several actions need, as
+stages: each step(world) writes motor commands (ctrl) for one tick and returns True once
+finished; physics then moves the robot. They know no cups or shelves and decide nothing.
 
-Each primitive is advanced by calling step(world) once per control tick and returns True when
-finished. Nothing here loops over mj_step: the caller owns the simulation loop. This is the
-shape a Behavior Tree action needs (RUNNING until done): the nodes run them as stages.
+    BaseMove   drive the base through waypoints; smooth starts and stops, reports stuck
+               used by go_to_box, pick_cup, go_to_shelf, place_cup, recover, takeover,
+               sim_action (safe_stages)
+    ToolLine   move the tool tip along a straight line (IK every tick)
+               used by go_to_shelf, place_cup, takeover, sim_action (safe_stages)
+    Wait       wait a while          used by pick_cup, place_cup
+
+Moves only one action uses live in that action's file (JointMove in pick_cup.py, Lazy in
+sim_action.py).
 """
 
 from __future__ import annotations
@@ -20,31 +27,6 @@ from sim.world import POSITION_ACTUATOR, World, r
 
 def _wrap(a: float) -> float:
     return (a + math.pi) % (2 * math.pi) - math.pi
-
-
-class JointMove:
-    """Move lift/arm joints to targets along a smooth (smoothstep) joint-space path."""
-
-    def __init__(self, target: dict[str, float], duration: float = 2.0, tol: float = 0.01,
-                 settle: float = 1.0):
-        self.target, self.duration, self.tol = target, duration, tol
-        self.settle = settle    # extra seconds to arrive before giving up (finished anyway)
-        self.t0 = None
-        self.q0: dict[str, float] = {}
-
-    def step(self, world: World) -> bool:
-        d = world.d
-        if self.t0 is None:
-            self.t0 = d.time
-            self.q0 = {j: float(d.actuator(r(POSITION_ACTUATOR[j])).ctrl[0]) for j in self.target}
-        s = min(1.0, (d.time - self.t0) / self.duration)
-        s = s * s * (3 - 2 * s)
-        for j, q1 in self.target.items():
-            d.actuator(r(POSITION_ACTUATOR[j])).ctrl = self.q0[j] + s * (q1 - self.q0[j])
-        if s < 1.0:
-            return False
-        err = max(abs(float(d.joint(r(j)).qpos[0]) - q1) for j, q1 in self.target.items())
-        return err < self.tol or d.time - self.t0 > self.duration + self.settle
 
 
 class BaseMove:
@@ -117,22 +99,6 @@ class Wait:
         if self.t0 is None:
             self.t0 = world.d.time
         return world.d.time - self.t0 >= self.seconds
-
-
-class Lazy:
-    """Build the real primitive on first step, from the state at that moment.
-
-    For motions whose target depends on what actually happened before (e.g. where the cup
-    ended up on the pad), as opposed to targets planned up front.
-    """
-
-    def __init__(self, factory):
-        self.factory, self.inner = factory, None
-
-    def step(self, world: World) -> bool:
-        if self.inner is None:
-            self.inner = self.factory(world)
-        return self.inner.step(world)
 
 
 class ToolLine:

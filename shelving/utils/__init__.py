@@ -4,7 +4,7 @@
     ik.py          arm math, computes only: joint angles for a tool point (IK), tool point
                    for joint angles, "would this pose touch anything?"
     planner.py     map and paths for the base (A*)
-    motion.py      moves over time: BaseMove, ToolLine, JointMove, Wait write motor
-                   commands each tick (ToolLine asks ik.py where the joints should go)
+    base_action.py basic moves several actions share: BaseMove, ToolLine, Wait (write
+                   motor commands each tick; ToolLine asks ik.py where the joints go)
     teleop.py      stage 2: the operator and the keyboard
 """

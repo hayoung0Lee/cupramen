@@ -11,13 +11,13 @@ from dataclasses import dataclass
 import numpy as np
 
 from behavioros.core.actions import action
-from shelving.action_base import SimAction
+from shelving.sim_action import SimAction
 from shelving.utils.common import (
     BASE_HALF_LENGTH, BOX_INTERIOR_HALF, BOX_STAND_HALF, GAP, HOVER, LIFT, PRESS, BasePose, Pose,
     avoid_floor_cups, backed_off, creep_clear, floor_cups, rot2d, route, solve_down, to_world,
 )
 from shelving.utils.ik import ArmIK, IKResult
-from shelving.utils.motion import BaseMove
+from shelving.utils.base_action import BaseMove
 from shelving.utils.planner import GridPlanner
 from sim.world import World
 
