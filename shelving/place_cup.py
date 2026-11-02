@@ -17,8 +17,12 @@ from shelving.utils.base_action import BaseMove, ToolLine, Wait
     reads=["shelf_plan"],
 )
 class PlaceCup(SimAction):
-    """params: cup, slot. Stops (fails with operator_takeover) before the release if the
-    operator pressed t, so the person can finish (stage 2)."""
+    """params: cup, slot, optional stop_for_takeover (default false).
+
+    With stop_for_takeover the action stops before the release (fails with
+    operator_takeover) when the operator pressed t, so the person can finish. Only a tree
+    that has a branch for the person (b6) may set it: anywhere else nobody would take over,
+    and the cup would be carried to the shelf and stopped again and again."""
 
     def execute(self):
         if self.stages is None:
@@ -40,9 +44,10 @@ class PlaceCup(SimAction):
             ready_tip = self.ik.tool_tip_at(world.d, plan.q_ready.q, plan.out)
             travel_tip = base_frame_point(plan.out, CARRY_TIP)
             op = self.operator
+            stop_for_takeover = bool(self.param("stop_for_takeover", False))
 
             def holding_no_takeover(w):
-                if op.want_takeover:                     # operator pressed t: stop here
+                if stop_for_takeover and op.want_takeover:   # operator pressed t: stop here
                     return "operator_takeover", {"slot": slot}
                 return holding(cup)(w)
 

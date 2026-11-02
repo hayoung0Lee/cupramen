@@ -25,7 +25,7 @@
             {"type": "selector", "name": "Place on the slot", "children": [
               {"type": "sequence", "name": "Robot places", "children": [
                 {"type": "check_place_ready", "name": "Can place accurately?", "cup": "${current_cup}"},
-                {"type": "place_cup",         "name": "Place cup",        "cup": "${current_cup}", "slot": "${current_slot}"},
+                {"type": "place_cup",         "name": "Place cup",        "cup": "${current_cup}", "slot": "${current_slot}", "stop_for_takeover": true},
                 {"type": "verify_placed",     "name": "Verify placement", "cup": "${current_cup}", "slot": "${current_slot}"}
               ]},
               {"type": "sequence", "name": "Person places", "children": [
