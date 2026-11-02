@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import numpy as np  # noqa: E402
 
-from shelving.utils.kinematics import ArmIK, level_reach_seed  # noqa: E402
+from shelving.utils.ik import ArmIK, level_reach_seed  # noqa: E402
 from shelving.go_to_box import box_side_poses  # noqa: E402
 from shelving.go_to_shelf import SHELF_GAPS, shelf_front_pose  # noqa: E402
 from sim.world import STOW, World  # noqa: E402

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from shelving.utils.kinematics import ArmIK, IKResult, level_reach_seed
+from shelving.utils.ik import ArmIK, IKResult, level_reach_seed
 from sim.world import PREFIX, World
 
 if TYPE_CHECKING:

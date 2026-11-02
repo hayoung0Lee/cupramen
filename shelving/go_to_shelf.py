@@ -17,7 +17,7 @@ from shelving.utils.common import (
     BasePose, Pose, avoid_floor_cups, backed_off, base_frame_point, clear_of_furniture,
     creep_clear, floor_cups, rot2d, route, solve_down, to_world,
 )
-from shelving.utils.kinematics import ArmIK, IKResult
+from shelving.utils.ik import ArmIK, IKResult
 from shelving.utils.motion import BaseMove, ToolLine
 from shelving.utils.planner import GridPlanner
 from sim.world import World

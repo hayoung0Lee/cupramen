@@ -13,12 +13,12 @@ only it uses:
     takeover.py      stage 2: check_place_ready, operator_available, request_takeover,
                      human_control, back_away
 
-What they use: shelving/utils/ (common, kinematics, planner, motion, teleop;
+What they use: shelving/utils/ (common, ik, planner, motion, teleop;
 see its __init__.py).
 
 The nodes decide what to do, in which order, and check that it worked (SUCCESS / FAILURE
 with a reason); they don't compute geometry or drive motors themselves. E.g. pick_cup:
-solve arm poses (kinematics) -> lower the arm (motion) -> world.suction_on() -> check it
+solve arm poses (ik) -> lower the arm (motion) -> world.suction_on() -> check it
 returned this cup, else fail("seal_failed") -> lift (motion) -> check still held.
 
 Importing this package registers every node with BehaviorOS (the @action decorators), so a

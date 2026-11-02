@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import mujoco  # noqa: E402
 import numpy as np  # noqa: E402
 
-from shelving.utils.kinematics import ArmIK  # noqa: E402
+from shelving.utils.ik import ArmIK  # noqa: E402
 from shelving.utils.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
 from shelving.utils.planner import GridPlanner  # noqa: E402
 from sim.world import STOW, World, r, randomize  # noqa: E402
