@@ -29,7 +29,7 @@ from scripts.faults import FaultInjector  # noqa: E402
 from shelving.utils.common import floor_cups  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
 from shelving.utils.kinematics import ArmIK  # noqa: E402
-from shelving.utils.nav import GridPlanner  # noqa: E402
+from shelving.utils.planner import GridPlanner  # noqa: E402
 from sim.world import PREFIX, World  # noqa: E402
 
 

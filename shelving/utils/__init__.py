@@ -2,7 +2,7 @@
 
     common.py      what several nodes share: scene sizes, distances, collision checks
     kinematics.py  arm math (IK, "would this pose touch anything?")
-    nav.py         paths for the base (A*)
+    planner.py     map and paths for the base (A*)
     motion.py      moves over time: BaseMove, ToolLine, JointMove, Wait
     teleop.py      stage 2: the operator and the keyboard
 """

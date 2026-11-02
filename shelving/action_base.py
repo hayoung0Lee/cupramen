@@ -71,7 +71,7 @@ class SimAction(BaseAction):
     blackboard only carries data between nodes (current cup, ledger, failures ...):
       world     sim.world.World                   the MuJoCo scene and robot
       ik        shelving.utils.kinematics.ArmIK   arm math
-      planner   shelving.utils.nav.GridPlanner    map and paths for this episode's layout
+      planner   shelving.utils.planner.GridPlanner    map and paths for this episode's layout
       operator  shelving.utils.teleop.Operator    stage 2 (nobody if absent)
     """
 

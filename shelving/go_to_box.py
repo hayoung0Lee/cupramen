@@ -18,7 +18,7 @@ from shelving.utils.common import (
 )
 from shelving.utils.kinematics import ArmIK, IKResult
 from shelving.utils.motion import BaseMove
-from shelving.utils.nav import GridPlanner
+from shelving.utils.planner import GridPlanner
 from sim.world import World
 
 REACH_MARGIN = 0.03  # a box side "has reach to spare" if the arm reaches 3 cm farther too

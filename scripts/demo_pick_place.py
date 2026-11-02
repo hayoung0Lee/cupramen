@@ -20,7 +20,7 @@ import numpy as np  # noqa: E402
 
 from shelving.utils.kinematics import ArmIK  # noqa: E402
 from shelving.utils.motion import BaseMove, JointMove, Lazy, Suction, Wait  # noqa: E402
-from shelving.utils.nav import GridPlanner  # noqa: E402
+from shelving.utils.planner import GridPlanner  # noqa: E402
 from sim.world import STOW, World, r, randomize  # noqa: E402
 from shelving.go_to_box import plan_box_approach  # noqa: E402
 from shelving.go_to_shelf import plan_shelf_approach  # noqa: E402

@@ -35,7 +35,7 @@ from scripts.faults import FaultInjector  # noqa: E402
 from shelving.utils.teleop import NoOperator, Operator, ScriptedOperator, start_terminal_keys  # noqa: E402
 from behavioros.core.builder import TreeBuilder  # noqa: E402
 from shelving.utils.kinematics import ArmIK  # noqa: E402
-from shelving.utils.nav import GridPlanner  # noqa: E402
+from shelving.utils.planner import GridPlanner  # noqa: E402
 from sim.world import World, r, randomize  # noqa: E402
 
 KEYS_LEFT = "type in the TERMINAL\nw / s\na / d\nr / f\nW S A D R F\ni k j l / u o\ng / space\nh"

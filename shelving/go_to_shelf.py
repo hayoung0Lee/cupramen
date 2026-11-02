@@ -19,7 +19,7 @@ from shelving.utils.common import (
 )
 from shelving.utils.kinematics import ArmIK, IKResult
 from shelving.utils.motion import BaseMove, ToolLine
-from shelving.utils.nav import GridPlanner
+from shelving.utils.planner import GridPlanner
 from sim.world import World
 
 # Standoffs to try in front of the shelf (scripts/check_reach.py). Close in, the long arm has
