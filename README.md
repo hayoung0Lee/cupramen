@@ -3,9 +3,9 @@
 | | 링크 |
 | --- | --- |
 | 발표 자료 (PPT) | [`presentation/cupramen_deck.pptx`](presentation/cupramen_deck.pptx) (시연 영상 포함, PowerPoint에서 재생) |
-| 시연 영상 1 — 1단계 자율 진열 | [Google Drive](https://drive.google.com/file/d/18KwTsCxmqHOXhp8NDLHtEb0RAk91i_ji/view?usp=drive_link) |
-| 시연 영상 2 — 1단계 실패 복구 | [Google Drive](https://drive.google.com/file/d/1mXBa8EdBgkdYa95MGEwYV54UjXXVnBLJ/view?usp=drive_link) |
-| 시연 영상 3 — 2단계 사람 개입 | [Google Drive](https://drive.google.com/file/d/1biMCKDI7z-blqV4Vi-rYDF6TaYEyvG41/view?usp=drive_link) |
+| 시연 영상 1 — 1단계 자율 진열 | [Google Drive](https://drive.google.com/file/d/18KwTsCxmqHOXhp8NDLHtEb0RAk91i_ji/view?usp=sharing) |
+| 시연 영상 2 — 1단계 실패 복구 | [Google Drive](https://drive.google.com/file/d/1mXBa8EdBgkdYa95MGEwYV54UjXXVnBLJ/view?usp=sharing) |
+| 시연 영상 3 — 2단계 사람 개입 | [Google Drive](https://drive.google.com/file/d/1biMCKDI7z-blqV4Vi-rYDF6TaYEyvG41/view?usp=sharing) |
 | 반복 실험 결과 (seed 0~4) | [`results/results_template.csv`](results/results_template.csv) (제공 양식에 기록, [`results/results.csv`](results/results.csv)와 같은 내용) |
 
 바퀴형 로봇이 무작위로 놓인 상자에서 컵라면 6개를 하나씩 집어 2단 선반의 진열 위치 6곳에 놓습니다.
