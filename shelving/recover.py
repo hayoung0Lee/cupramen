@@ -20,16 +20,41 @@ class Recover(LedgerAction):
     """Runs as the fallback of "shelve one cup". Always SUCCESS, so the loop goes on and
     the next round re-plans from wherever the robot and the cups are now.
 
-    Makes the robot safe first (SimAction.safe_stages in sim_action.py). A held cup stays
-    held: the next round sees it in the ledger and carries it on. If the slot could not be reached (no
-    parking spot, blocked, timeout on the way), the slot goes on blocked_slots and the next
-    round picks another one.
+    When it runs: any node inside "shelve one cup" failed (after its own retries, if it
+    has them) and left the reason on the blackboard as last_failure, e.g.
+      {"node": "Carry to shelf", "action": "go_to_shelf", "reason": "cup_dropped", ...}
+
+    What it does, as one node with its own list of stages (like every SimAction):
+      first tick   stop the base, then write the list once:
+                     safe_stages(world)      moves that depend on where the robot is now
+                                             (sim_action.py): tool over the box -> lift it
+                                             straight up; near the box or shelf -> back the
+                                             base straight out; then arm to the carry pose
+                     Do(finish)              the bookkeeping, run when the moves are done
+                                             (a lambda, so it does not run while writing)
+      every tick   run_stages() moves the first stage on by one tick and drops it when
+                   done -> RUNNING; an instant stage (Do) runs in the same tick; the list
+                   empty -> SUCCESS
+
+    finish (the bookkeeping):
+      - attempts[cup] += 1. At MAX_ATTEMPTS (ledger.py) a cup still in the box is
+        "skipped", so one cup cannot fail forever.
+      - go_to_shelf could not reach the slot (no parking spot, blocked, timeout on the
+        way) -> the slot goes on blocked_slots and the next round picks another one.
+      - recoveries += 1, last_failure cleared.
+      - refresh_ledger: look at the scene again for every cup and slot, instead of
+        trusting what was planned. That decides the next round:
+          cup still on the pad      -> "held": the next round carries it on
+          cup fell back into box    -> "in_box": picked again from where it lies now
+          cup on the floor          -> "lost": out of reach, given up
+          cup released off its slot -> "misplaced": that slot is blocked
+        and all_cups_done goes True when nothing is left, which ends the loop.
     """
 
     SLOT_FAILURES = ("no_shelf_spot", "blocked", "timeout")
 
     def execute(self):
-        if self.stages is None:
+        if self.stages is None:                              # first tick: plan the stages
             world = self.world
             BaseMove.stop(world)
             if self.read_blackboard("all_cups_done"):        # e.g. select found nothing
@@ -42,7 +67,7 @@ class Recover(LedgerAction):
             if failure.get("action") == "go_to_shelf" and failure.get("reason") in self.SLOT_FAILURES:
                 slot = self.read_blackboard("current_slot")
             self.stages = self.safe_stages(world) + [Do(lambda w: self.finish(cup, slot))]
-        return self.run_stages()
+        return self.run_stages()                             # every tick: one step on
 
     def finish(self, cup, blocked_slot=None):
         if blocked_slot is not None:
