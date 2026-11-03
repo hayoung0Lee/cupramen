@@ -1,6 +1,6 @@
-seed,success_count,total_cups,duration_s,path_length_m,reference_path_m,path_vs_reference,human_interventions,failures,recoveries,notes
-0,5,6,282.4,23.26,22.88,1.02,0,6,5,"seal_failed x3; cup_dropped x2; no_shelf_spot x1; not shelved: saewootang=lost; blocked slots: 2; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
-1,5,6,333.7,23.4,19.95,1.17,0,13,10,"seal_failed x10; cup_dropped x2; no_shelf_spot x1; not shelved: ojingeozzamppong=lost; blocked slots: 2; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
-2,5,6,285.3,25.87,19.54,1.32,0,6,5,"seal_failed x3; cup_dropped x2; no_shelf_spot x1; not shelved: nugoori=lost; blocked slots: 4; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
-3,5,6,292.6,32.0,41.01,0.78,0,5,4,"seal_failed x3; cup_dropped x2; not shelved: twigimwoodong=lost; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
-4,4,6,282.2,17.27,16.45,1.05,0,12,11,"seal_failed x8; cup_dropped x2; no_shelf_spot x2; not shelved: saewootang=lost twigimwoodong=in_box; blocked slots: 1 4; injected faults: seal:0.3,drop-lift:3,drop-carry:2"
+﻿seed,success_count,total_cups,duration_s,path_length_m,reference_path_m,path_vs_reference,human_interventions,failures,recoveries,notes
+0,5,6,282.4,23.26,22.88,1.02,0,6,5,"실패: 흡착 안 됨 3번, 컵 떨어짐 2번, 칸 앞에 세울 자리 없음 1번 (6번 중 5번 복구: 그 컵은 결국 진열됨). 못 올린 컵: 새우탕 (바닥에 떨어져 팔이 안 닿음, 포기). 포기한 칸: 2번 (갈 수 없었음). 일부러 넣은 고장: seal:0.3,drop-lift:3,drop-carry:2."
+1,5,6,333.7,23.4,19.95,1.17,0,13,10,"실패: 흡착 안 됨 10번, 컵 떨어짐 2번, 칸 앞에 세울 자리 없음 1번 (13번 중 10번 복구: 그 컵은 결국 진열됨). 못 올린 컵: 오징어짬뽕 (바닥에 떨어져 팔이 안 닿음, 포기). 포기한 칸: 2번 (갈 수 없었음). 일부러 넣은 고장: seal:0.3,drop-lift:3,drop-carry:2."
+2,5,6,285.3,25.87,19.54,1.32,0,6,5,"실패: 흡착 안 됨 3번, 컵 떨어짐 2번, 칸 앞에 세울 자리 없음 1번 (6번 중 5번 복구: 그 컵은 결국 진열됨). 못 올린 컵: 너구리 (바닥에 떨어져 팔이 안 닿음, 포기). 포기한 칸: 4번 (갈 수 없었음). 일부러 넣은 고장: seal:0.3,drop-lift:3,drop-carry:2."
+3,5,6,292.6,32.0,41.01,0.78,0,5,4,"실패: 흡착 안 됨 3번, 컵 떨어짐 2번 (5번 중 4번 복구: 그 컵은 결국 진열됨). 못 올린 컵: 튀김우동 (바닥에 떨어져 팔이 안 닿음, 포기). 일부러 넣은 고장: seal:0.3,drop-lift:3,drop-carry:2."
+4,4,6,282.2,17.27,16.45,1.05,0,12,11,"실패: 흡착 안 됨 8번, 컵 떨어짐 2번, 칸 앞에 세울 자리 없음 2번 (12번 중 11번 복구: 그 컵은 결국 진열됨). 못 올린 컵: 새우탕 (바닥에 떨어져 팔이 안 닿음, 포기), 튀김우동 (상자에 남음, 남은 칸 없음). 포기한 칸: 1, 4번 (갈 수 없었음). 일부러 넣은 고장: seal:0.3,drop-lift:3,drop-carry:2."

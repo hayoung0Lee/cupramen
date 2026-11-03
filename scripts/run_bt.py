@@ -54,22 +54,49 @@ CSV_FIELDS = ["seed", "success_count", "total_cups", "duration_s", "path_length_
               "recoveries", "notes"]          # column order of the provided results_template.csv
 
 
+# notes are in Korean, for the reviewers (the README and the slides are Korean too).
+FAILURE_TEXT = {      # failure reason -> what happened
+    "seal_failed": "흡착 안 됨", "cup_dropped": "컵 떨어짐",
+    "no_shelf_spot": "칸 앞에 세울 자리 없음", "blocked": "가는 길이 막힘",
+    "timeout": "시간 초과", "misplaced": "칸에서 벗어나게 놓임",
+    "cup_tilted_on_pad": "흡착판에 컵이 기울어 붙음", "cup_off_centre_on_pad": "흡착판에 컵이 치우쳐 붙음",
+    "ik_failed": "팔이 닿지 않음", "no_answer": "사람이 응답하지 않음",
+}
+CUP_TEXT = {          # ledger state of a cup not shelved -> why
+    "lost": "바닥에 떨어져 팔이 안 닿음, 포기",
+    "in_box": "상자에 남음, 남은 칸 없음",
+    "skipped": "상자에 남음, 3번 실패해서 포기",
+    "misplaced": "칸에서 벗어나게 놓임",
+    "held": "끝날 때 흡착판에 붙어 있음",
+}
+CUP_NAME = {"shinramen": "신라면", "nugoori": "너구리", "ansungtangmyeon": "안성탕면",
+            "saewootang": "새우탕", "twigimwoodong": "튀김우동", "ojingeozzamppong": "오징어짬뽕"}
+
+
 def results_row(seed, blackboard, placed, summary, reference_m, duration_s, inject):
     """One CSV row. failures: every failure the tree recorded (end of work excluded).
-    recoveries: failures whose cup still ended up on the shelf."""
+    recoveries: failures whose cup still ended up on the shelf.
+    notes: the failures by kind, the cups not shelved and why, the slots given up, and
+    the faults injected, as plain sentences in Korean."""
     not_faults = ("nothing_left", "operator_takeover")   # end of work; the person asked
     log = [f for f in blackboard.get("failure_log", []) if f["reason"] not in not_faults]
     cups = blackboard.get("cups", {})
     recovered = [f for f in log if cups.get(f["detail"].get("cup")) == "placed"]
     counts = collections.Counter(f["reason"] for f in log)
-    notes = [f"{r} x{n}" for r, n in counts.most_common()]
+    notes = []
+    if log:
+        notes.append("실패: " + ", ".join(f"{FAILURE_TEXT.get(r, r)} {n}번"
+                                           for r, n in counts.most_common())
+                     + f" ({len(log)}번 중 {len(recovered)}번 복구: 그 컵은 결국 진열됨).")
     left = {c.removeprefix("cup_"): s for c, s in cups.items() if s != "placed"}
     if left:
-        notes.append("not shelved: " + " ".join(f"{c}={s}" for c, s in left.items()))
+        notes.append("못 올린 컵: " + ", ".join(f"{CUP_NAME.get(c, c)} ({CUP_TEXT.get(s, s)})"
+                                              for c, s in left.items()) + ".")
     if blackboard.get("blocked_slots"):
-        notes.append("blocked slots: " + " ".join(map(str, sorted(blackboard["blocked_slots"]))))
+        notes.append("포기한 칸: " + ", ".join(map(str, sorted(blackboard["blocked_slots"])))
+                     + "번 (갈 수 없었음).")
     if inject:
-        notes.append(f"injected faults: {inject}")
+        notes.append(f"일부러 넣은 고장: {inject}.")
     return {
         "seed": seed, "success_count": placed, "total_cups": 6,
         "duration_s": round(duration_s, 1),
@@ -78,7 +105,7 @@ def results_row(seed, blackboard, placed, summary, reference_m, duration_s, inje
         "path_vs_reference": round(summary["path_vs_reference"], 2),
         "human_interventions": blackboard.get("human_interventions", 0),
         "failures": len(log), "recoveries": len(recovered),
-        "notes": "; ".join(notes) or "no failures",
+        "notes": " ".join(notes) or "실패 없음.",
     }
 
 
@@ -86,11 +113,11 @@ def write_row(path: Path, row):
     """Replace this seed's row (or add it), keep the others, sorted by seed."""
     rows = []
     if path.exists():
-        with path.open() as f:
+        with path.open(encoding="utf-8-sig") as f:
             rows = [r for r in csv.DictReader(f) if r["seed"] != str(row["seed"])]
     rows.append(row)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="") as f:
+    with path.open("w", newline="", encoding="utf-8-sig") as f:   # BOM: Excel shows Korean
         w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         w.writeheader()
         w.writerows(sorted(rows, key=lambda r: int(r["seed"])))
