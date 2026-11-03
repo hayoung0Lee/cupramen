@@ -2,7 +2,7 @@
 
 | | 링크 |
 | --- | --- |
-| 발표 자료 (PPT) | [`presentation/cupramen_deck.pptx`](presentation/cupramen_deck.pptx) (시연 영상 포함, PowerPoint에서 재생) |
+| 발표 자료 | [PDF](presentation/cupramen_deck.pdf) (영상은 링크) · [PPT](presentation/cupramen_deck.pptx) (시연 영상 포함, PowerPoint에서 재생) |
 | 시연 영상 1 — 1단계 자율 진열 | [Google Drive](https://drive.google.com/file/d/18KwTsCxmqHOXhp8NDLHtEb0RAk91i_ji/view?usp=sharing) |
 | 시연 영상 2 — 1단계 실패 복구 | [Google Drive](https://drive.google.com/file/d/1mXBa8EdBgkdYa95MGEwYV54UjXXVnBLJ/view?usp=sharing) |
 | 시연 영상 3 — 2단계 사람 개입 | [Google Drive](https://drive.google.com/file/d/1biMCKDI7z-blqV4Vi-rYDF6TaYEyvG41/view?usp=sharing) |
@@ -143,7 +143,7 @@ sim/                     시뮬레이션 세상
 scripts/                 run_bt.py(실행기), faults.py(실패 주입), 검사·보기 도구
 tests/                   shelving 테스트 (컵 상태 판정, 움직임, 2단계 조종자)
 results/                 반복 실험 결과
-presentation/            발표 자료 (PPT)
+presentation/            발표 자료 (PDF, PPT)
 ```
 
 한 tick(20 ms)마다 BehaviorOS가 트리를 훑어 실행 중인 노드를 찾고, 그 노드가 모터 명령을 한 조각 쓴 뒤 RUNNING / SUCCESS / FAILURE를 보고합니다. 그다음 물리를 2 ms씩 10번 계산합니다([`scripts/run_bt.py`](scripts/run_bt.py)).
