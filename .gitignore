@@ -25,3 +25,6 @@ outputs/
 .vscode/
 .idea/
 .coverage
+
+# Office lock files (made while a document is open)
+~$*
