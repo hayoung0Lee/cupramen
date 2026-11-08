@@ -6,7 +6,7 @@
 | 시연 영상 1 — 1단계 자율 진열 | [Google Drive](https://drive.google.com/file/d/18KwTsCxmqHOXhp8NDLHtEb0RAk91i_ji/view?usp=sharing) |
 | 시연 영상 2 — 1단계 실패 복구 | [Google Drive](https://drive.google.com/file/d/1mXBa8EdBgkdYa95MGEwYV54UjXXVnBLJ/view?usp=sharing) |
 | 시연 영상 3 — 2단계 사람 개입 | [Google Drive](https://drive.google.com/file/d/1biMCKDI7z-blqV4Vi-rYDF6TaYEyvG41/view?usp=sharing) |
-| 반복 실험 결과 (seed 0~4) | [`results/results_template.csv`](results/results_template.csv) (제공 양식에 기록, [`results/results.csv`](results/results.csv)와 같은 내용) |
+| 반복 실험 결과 (seed 0~4) | [`results/results_template.csv`](results/results_template.csv) (제공 양식에 기록) |
 
 바퀴형 로봇이 무작위로 놓인 상자에서 컵라면 6개를 하나씩 집어 2단 선반의 진열 위치 6곳에 놓습니다.
 작업 순서는 [BehaviorOS](BehaviorOS/)(개인 프로젝트, 이번 과제에서 확장)의 JSON Behavior Tree로 정의하고 실행합니다.
@@ -94,7 +94,7 @@ export CUPRAMEN_ASSETS=/path/to/cupramen_sim_assets
 
 ```bash
 for s in 0 1 2 3 4; do
-  .venv/bin/python scripts/run_bt.py trees/b6_takeover.json --seed $s --headless --csv results/results.csv
+  .venv/bin/python scripts/run_bt.py trees/b6_takeover.json --seed $s --headless --csv results/results_template.csv
 done
 ```
 

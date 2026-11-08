@@ -4,7 +4,7 @@
     python   scripts/run_bt.py trees/b2_go_to_box.json --seed 0 --headless
     python   scripts/run_bt.py trees/b5_recovery.json --seed 0 --headless --inject seal:0.3
              (faults: scripts/faults.py)
-    python   scripts/run_bt.py trees/b5_recovery.json --seed 0 --headless --csv results/results.csv
+    python   scripts/run_bt.py trees/b5_recovery.json --seed 0 --headless --csv results/results_template.csv
              (writes this seed's row in the results_template.csv format; other rows kept)
     mjpython scripts/run_bt.py trees/b6_takeover.json --seed 0
              (stage 2: press t in this terminal to take over at the shelf, ? for keys)
